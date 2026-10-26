@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -27,6 +28,7 @@ import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from app import countries, intent  # noqa: E402
 from app.pipeline import Orchestrator  # noqa: E402
 from tests.replay import FIXTURES, RecordingTransport  # noqa: E402
 
@@ -44,6 +46,22 @@ SCENARIOS = [
     ("What is happening in Iran?", {"date": EVENTS_DAY}),
     ("Compare the US and Russia in 2015", {}),
 ]
+
+
+def trim_vote_agreement(records: dict) -> None:
+    """Keep only the vote-agreement pairs among the recorded questions' countries.
+
+    Policy Stance's /temporal-agreement returns every pair of countries (about
+    10 MB); the adapter looks up one pair per bilateral question.
+    """
+    key = "policy_stance GET /temporal-agreement"
+    full = (records.get(key) or {}).get("json")
+    listing = (records.get("policy_stance GET /countries") or {}).get("json") or []
+    if not isinstance(full, dict) or not listing:
+        return
+    by_gw = {row["gw_code"]: row["name"] for row in listing}
+    wanted = {by_gw.get(countries.get(iso3).gw) for question, _ in SCENARIOS for iso3 in intent.parse(question).iso3s}
+    records[key]["json"] = {pair: years for pair, years in full.items() if set(re.split(r"\|\||-", pair)) <= wanted}
 
 
 async def main(agents: list[str], keep_recorded: bool = False) -> None:
@@ -65,6 +83,7 @@ async def main(agents: list[str], keep_recorded: bool = False) -> None:
         kept = {key: value for key, value in old.items() if key.split(" ", 1)[0] not in agents}
         records = {**kept, **fresh}
         print(f"re-recorded {len(fresh)} responses for {', '.join(agents)}; kept {len(kept)} others")
+    trim_vote_agreement(records)
     FIXTURES.parent.mkdir(exist_ok=True)
     FIXTURES.write_text(json.dumps(records, indent=1, sort_keys=True), encoding="utf-8")
     print(f"recorded {len(records)} responses -> {FIXTURES} ({FIXTURES.stat().st_size / 1e6:.1f} MB)")
