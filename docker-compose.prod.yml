@@ -1,0 +1,84 @@
+# Production deployment on one Linux server (see docs/DEPLOY.md).
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Only Caddy is published (80/443). It terminates HTTPS, asks for the shared login,
+# and proxies to the orchestrator. The four agents and the orchestrator are reachable
+# only on the internal compose network.
+#
+# Data is mounted from the host, not baked into images (docs/DATA.md):
+#   services/trade_intelligence/cache        BACI parquet cache
+#   services/policy_stance/data              UN GA voting + UCDP datasets
+#   services/event_summarization/data        GGE scores; GDELT days are downloaded here
+
+name: team128
+
+services:
+  soft_power:
+    build:
+      context: ./services/soft_power
+      dockerfile: ../../deploy/soft_power.Dockerfile
+      additional_contexts: { deploy: ./deploy }
+    restart: unless-stopped
+
+  policy_stance:
+    build:
+      context: ./services/policy_stance
+      dockerfile: ../../deploy/policy_stance.Dockerfile
+      additional_contexts: { deploy: ./deploy }
+    restart: unless-stopped
+    volumes:
+      - ./services/policy_stance/data:/app/data:ro
+      - policy_outputs:/app/outputs
+
+  trade_intelligence:
+    build: { context: ./services/trade_intelligence }
+    restart: unless-stopped
+    environment:
+      TRADE_CACHE_DIR: /app/cache
+    volumes:
+      - ./services/trade_intelligence/cache:/app/cache:ro
+
+  event_summarization:
+    build:
+      context: ./services/event_summarization
+      dockerfile: ../../deploy/event_summarization.Dockerfile
+      additional_contexts: { deploy: ./deploy }
+    restart: unless-stopped
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    volumes:
+      - ./services/event_summarization/data:/app/data
+
+  orchestrator:
+    build:
+      context: ./orchestrator
+      dockerfile: ../deploy/orchestrator.Dockerfile
+      additional_contexts: { deploy: ./deploy }
+    restart: unless-stopped
+    environment:
+      SOFT_POWER_URL: http://soft_power:8000
+      POLICY_STANCE_URL: http://policy_stance:8000
+      TRADE_URL: http://trade_intelligence:8000
+      EVENTS_URL: http://event_summarization:8000
+      # The module dashboards are not deployed; hide their drill-through links.
+      SOFT_POWER_DASHBOARD_URL: ""
+      POLICY_STANCE_DASHBOARD_URL: ""
+      TRADE_DASHBOARD_URL: ""
+      EVENTS_DASHBOARD_URL: ""
+    depends_on: [soft_power, policy_stance, trade_intelligence, event_summarization]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [orchestrator]
+
+volumes:
+  policy_outputs:
+  caddy_data:
+  caddy_config:
