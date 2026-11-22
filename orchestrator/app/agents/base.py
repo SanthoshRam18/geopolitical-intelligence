@@ -46,6 +46,9 @@ class CallRecord:
     # published a day, so it falls back to the previous one). Logged, but it
     # does not make the result "partial".
     handled: bool = False
+    # The scalar parameters or body fields the call was made with (country, year,
+    # query_type...), so the run console can say what each call was for.
+    request: Optional[dict] = None
 
 
 @dataclass
@@ -102,6 +105,7 @@ class AgentAdapter:
     async def _request(self, method: str, path: str, *, params: Any = None, json: Any = None, timeout: Optional[float] = None) -> Any:
         url = f"{self.config.base_url}{path}"
         started = time.perf_counter()
+        asked = _request_summary(params, json)
         budget = timeout or self.config.timeout_s
         # A down agent should be reported in about a second, not after the
         # whole read budget meant for a slow-but-working one.
@@ -109,20 +113,20 @@ class AgentAdapter:
         try:
             response = await self.client.request(method, url, params=params, json=json, timeout=limits)
         except (httpx.ConnectError, httpx.ConnectTimeout) as exc:
-            self._log(method, path, None, started, f"unreachable: {type(exc).__name__}")
+            self._log(method, path, None, started, f"unreachable: {type(exc).__name__}", asked)
             raise AgentCallError(f"{self.label} agent unreachable at {self.config.base_url}", unreachable=True) from exc
         except httpx.TimeoutException as exc:
-            self._log(method, path, None, started, "timeout")
+            self._log(method, path, None, started, "timeout", asked)
             raise AgentCallError(f"{self.label} agent timed out on {path}") from exc
         except httpx.HTTPError as exc:
-            self._log(method, path, None, started, type(exc).__name__)
+            self._log(method, path, None, started, type(exc).__name__, asked)
             raise AgentCallError(f"{self.label} agent request failed: {exc}") from exc
 
         if response.status_code >= 400:
             detail = _error_detail(response)
-            self._log(method, path, response.status_code, started, detail)
+            self._log(method, path, response.status_code, started, detail, asked)
             raise AgentCallError(detail, status_code=response.status_code)
-        self._log(method, path, response.status_code, started)
+        self._log(method, path, response.status_code, started, request=asked)
         try:
             return response.json()
         except ValueError as exc:
@@ -147,8 +151,8 @@ class AgentAdapter:
         if self._calls:
             self._calls[-1].handled = True
 
-    def _log(self, method: str, path: str, status: Optional[int], started: float, error: Optional[str] = None) -> None:
-        self._calls.append(CallRecord(method=method, path=path, status=status, ms=round((time.perf_counter() - started) * 1000, 1), error=error))
+    def _log(self, method: str, path: str, status: Optional[int], started: float, error: Optional[str] = None, request: Optional[dict] = None) -> None:
+        self._calls.append(CallRecord(method=method, path=path, status=status, ms=round((time.perf_counter() - started) * 1000, 1), error=error, request=request))
 
     # ------------------------------------------------------------- lifecycle
     async def health(self) -> dict:
@@ -211,3 +215,22 @@ async def try_call(coro, fallback: Any = None) -> Any:
         return await coro
     except AgentCallError:
         return fallback
+
+
+def _request_summary(params: Any, body: Any) -> Optional[dict]:
+    """The short scalar fields of a call's query parameters and JSON body."""
+    summary: dict = {}
+    for source in (params, body):
+        items = source.items() if isinstance(source, dict) else source if isinstance(source, (list, tuple)) else ()
+        for item in items:
+            if not (isinstance(item, tuple) and len(item) == 2):
+                continue
+            key, value = item
+            if isinstance(value, (str, int, float, bool)) and len(str(value)) <= 60:
+                # Repeated keys (iso3=IND&iso3=CHN) collect into a list.
+                if key in summary:
+                    previous = summary[key]
+                    summary[key] = (previous if isinstance(previous, list) else [previous]) + [value]
+                else:
+                    summary[key] = value
+    return summary or None

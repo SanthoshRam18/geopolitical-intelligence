@@ -3,153 +3,292 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Geopolitical Briefing</title>
+<title>GEOINT Engine · Team 128</title>
+<script src="/static/review.js" data-page="engine" defer></script>
 <style>
   :root {
-    --bg: #f6f7f9; --panel: #ffffff; --ink: #16181d; --muted: #5d6470; --line: #e1e4ea;
-    --accent: #2f5bea; --accent-soft: #e8eefe;
-    --diverge: #b4541a; --diverge-soft: #fdf0e7;
-    --agree: #1f7a4d; --agree-soft: #e7f5ee;
-    --cross: #5b45c9; --cross-soft: #efecfc;
-    --bad: #b42318; --warn: #a15c07;
+    --bg: #070b12; --bg2: #0b111b; --panel: #0f1622; --panel2: #131c2b; --line: #1f2a3c; --line2: #2a3850;
+    --ink: #e6ebf3; --muted: #8b97ab; --dim: #5f6b80;
+    --accent: #5cc8ff; --accent-soft: rgba(92, 200, 255, .12);
+    --good: #4ade80; --bad: #f87171; --warn: #fbbf24;
+    --diverge: #fb923c; --diverge-soft: rgba(251, 146, 60, .10);
+    --agree: #4ade80; --agree-soft: rgba(74, 222, 128, .09);
+    --cross: #a78bfa; --cross-soft: rgba(167, 139, 250, .10);
+    --c-soft_power: #a78bfa; --c-policy_stance: #f5b942; --c-trade_intelligence: #34d399; --c-event_summarization: #f472b6;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0f1115; --panel: #171a21; --ink: #e8eaef; --muted: #9aa3b2; --line: #2a2f3a;
-      --accent: #7b9bff; --accent-soft: #1d2640;
-      --diverge: #f0a36b; --diverge-soft: #33241a;
-      --agree: #6fd3a0; --agree-soft: #16291f;
-      --cross: #b3a6ff; --cross-soft: #231f3b;
-      --bad: #ff8a80; --warn: #ffc56b;
-    }
-  }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--line); background: var(--panel); }
-  header h1 { font-size: 17px; margin: 0; letter-spacing: .01em; }
-  header h1 span { color: var(--muted); font-weight: 400; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(1200px 600px at 70% -10%, rgba(92, 200, 255, .08), transparent 60%), var(--bg); min-height: 100vh; }
+  body::before { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .35;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 44px 44px; mask-image: radial-gradient(ellipse at 50% 0%, #000 0%, transparent 70%); }
+  a { color: var(--accent); }
+  .hidden { display: none !important; }
+  .muted { color: var(--muted); font-size: 13px; }
+
+  /* ---------------------------------------------------------------- top bar */
+  header.top { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between;
+    padding: 12px 22px; background: rgba(7, 11, 18, .86); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; }
+  .topnav { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .topnav > a { color: var(--muted); text-decoration: none; font-size: 13.5px; }
+  .topnav > a:hover { color: var(--ink); }
+  .brand .logo { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-size: 15px;
+    background: conic-gradient(from 200deg, var(--c-soft_power), var(--c-policy_stance), var(--c-trade_intelligence), var(--c-event_summarization), var(--c-soft_power)); color: #071018; font-weight: 800; }
+  .brand b { letter-spacing: .14em; font-size: 14px; }
+  .brand span { color: var(--muted); font-size: 13px; }
   .pills { display: flex; flex-wrap: wrap; gap: 6px; }
-  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 12.5px; color: var(--muted); background: var(--panel); text-decoration: none; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-  .dot.ok { background: var(--agree); } .dot.bad { background: var(--bad); } .dot.warn { background: var(--warn); }
-  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
-  .ask { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
-  .ask form { display: flex; gap: 8px; }
-  .ask input[type=text] { flex: 1; min-width: 0; font: inherit; padding: 11px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
-  button { font: inherit; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
-  button:disabled { opacity: .55; cursor: progress; }
-  button.ghost { background: transparent; color: var(--accent); }
-  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .examples button { padding: 4px 10px; font-size: 13px; background: var(--accent-soft); color: var(--accent); border-color: transparent; }
-  details.opts { margin-top: 10px; color: var(--muted); font-size: 13.5px; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border: 1px solid var(--line2); border-radius: 999px;
+    font-size: 12.5px; color: var(--muted); background: var(--panel); text-decoration: none; }
+  .pill:hover { color: var(--ink); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); flex: none; }
+  .dot.ok { background: var(--good); box-shadow: 0 0 8px var(--good); } .dot.bad { background: var(--bad); } .dot.warn { background: var(--warn); }
+
+  main { position: relative; max-width: 1320px; margin: 0 auto; padding: 26px 18px 80px; }
+
+  /* ---------------------------------------------------------------- mission input */
+  .console { border: 1px solid var(--line2); border-radius: 16px; padding: 20px 22px 16px; background: linear-gradient(180deg, var(--panel2), var(--panel)); }
+  .eyebrow { font: 600 11.5px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+  .console h1 { margin: 8px 0 4px; font-size: 24px; line-height: 1.25; }
+  .console .sub { margin: 0 0 14px; color: var(--muted); max-width: 820px; }
+  .console form { display: flex; gap: 10px; }
+  .console input[type=text] { flex: 1; min-width: 0; font: 16px/1.4 inherit; padding: 13px 16px; border-radius: 10px; border: 1px solid var(--line2);
+    background: var(--bg2); color: var(--ink); outline: none; }
+  .console input[type=text]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  button { font: inherit; cursor: pointer; }
+  .run-btn { padding: 12px 22px; border-radius: 10px; border: 0; font-weight: 700; letter-spacing: .02em; color: #04121c;
+    background: linear-gradient(135deg, #7ad7ff, #3aa8f0); }
+  .run-btn:disabled { opacity: .55; cursor: progress; }
+  .missions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; align-items: center; }
+  .missions .lbl { font: 600 11px/1 var(--mono); letter-spacing: .12em; color: var(--dim); text-transform: uppercase; margin-right: 4px; }
+  .missions button { padding: 5px 11px; font-size: 13px; border-radius: 8px; border: 1px solid var(--line2); background: var(--bg2); color: var(--ink); }
+  .missions button:hover { border-color: var(--accent); color: var(--accent); }
+  details.opts { margin-top: 12px; color: var(--muted); font-size: 13.5px; }
+  details.opts summary { cursor: pointer; }
   details.opts .row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; align-items: center; }
-  details.opts select, details.opts input { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
-  .status { margin: 14px 2px; color: var(--muted); font-size: 14px; min-height: 1.5em; }
+  details.opts select, details.opts input { font: inherit; padding: 4px 6px; border: 1px solid var(--line2); border-radius: 6px; background: var(--bg2); color: var(--ink); }
+
+  /* ---------------------------------------------------------------- fleet (idle) */
+  .fleet-title { margin: 30px 2px 12px; font: 600 12px/1 var(--mono); letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+  .fleet { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .unit { position: relative; border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: var(--panel); overflow: hidden; }
+  .unit::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--agent); }
+  .unit .glyph { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-size: 17px; color: var(--agent);
+    background: color-mix(in srgb, var(--agent) 14%, transparent); border: 1px solid color-mix(in srgb, var(--agent) 35%, transparent); }
+  .unit h3 { margin: 10px 0 2px; font-size: 16px; }
+  .unit .field { color: var(--agent); font-size: 13px; font-weight: 600; }
+  .unit p { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+  .unit .live { position: absolute; top: 16px; right: 16px; display: flex; align-items: center; gap: 6px; font: 11.5px var(--mono); color: var(--muted); }
+  .how { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .how div { border: 1px dashed var(--line2); border-radius: 12px; padding: 12px 14px; color: var(--muted); font-size: 13px; }
+  .how b { display: block; color: var(--ink); font-size: 13.5px; margin-bottom: 2px; }
+
+  /* ---------------------------------------------------------------- run layout */
+  .runbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 18px 2px 12px; }
+  .status { color: var(--muted); font: 13px var(--mono); min-height: 1.4em; }
   .status.err { color: var(--bad); }
-  .brief { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin-top: 8px; }
-  .brief h2 { margin: 0 0 10px; font-size: 22px; line-height: 1.3; }
-  .brief ul { margin: 0; padding-left: 20px; }
-  .brief li { margin: 6px 0; }
-  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; font-size: 13px; color: var(--muted); }
-  .chip { padding: 2px 9px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); }
-  h3.sec { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 28px 2px 10px; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
-  .card.divergence { background: var(--diverge-soft); border-color: transparent; }
-  .card.corroboration { background: var(--agree-soft); border-color: transparent; }
-  .card.cross_agent { background: var(--cross-soft); border-color: transparent; }
-  .kind { font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
-  .divergence .kind { color: var(--diverge); } .corroboration .kind { color: var(--agree); } .cross_agent .kind { color: var(--cross); }
-  .card h4 { margin: 4px 0 6px; font-size: 15.5px; }
-  .card p { margin: 0; }
-  .conf { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12.5px; color: var(--muted); }
-  .bar { flex: 0 0 90px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
-  .bar i { display: block; height: 100%; background: var(--accent); }
-  .badges { display: flex; gap: 4px; flex-wrap: wrap; }
-  .badge { font-size: 11.5px; padding: 1px 7px; border-radius: 5px; background: var(--panel); border: 1px solid var(--line); color: var(--ink); }
-  .caveat { margin-top: 8px; font-size: 13px; color: var(--warn); }
-  details.support { margin-top: 8px; font-size: 13px; color: var(--muted); }
-  details.support li { margin: 4px 0; }
-  /* One full-width panel per agent, all in the same frame: header, KPI row,
-     agent-specific views, claims, then calls. */
-  .agents { display: grid; grid-template-columns: 1fr; gap: 14px; }
-  @media (max-width: 600px) { .ask form { flex-direction: column; } }
-  .panel { padding: 16px 18px; }
-  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
-  .tile { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; min-width: 0; }
-  .tile .k { font-size: 12px; color: var(--muted); }
-  .tile .v { font-size: 20px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+  .ghost { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line2); background: transparent; color: var(--muted); font-size: 13px; }
+  .ghost:hover { color: var(--ink); border-color: var(--accent); }
+  .run { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 900px) { .run { grid-template-columns: 1fr; } .rail { position: static !important; } .rail ol { display: flex; flex-wrap: wrap; } }
+  .rail { position: sticky; top: 74px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--panel); }
+  .rail .eyebrow { display: block; margin: 2px 4px 10px; color: var(--muted); }
+  .rail ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .rail li { display: grid; grid-template-columns: 26px 1fr; gap: 2px 8px; align-items: center; padding: 8px 8px; border-radius: 9px; cursor: pointer; border: 1px solid transparent; }
+  .rail li:hover { background: var(--panel2); }
+  .rail .num { grid-row: span 2; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 600 11px var(--mono);
+    border: 1px solid var(--line2); color: var(--muted); }
+  .rail .nm { font-size: 13.5px; font-weight: 600; }
+  .rail .rs { font: 11.5px var(--mono); color: var(--dim); }
+  .rail li.s-running { border-color: color-mix(in srgb, var(--agent, var(--accent)) 45%, transparent); background: var(--panel2); }
+  .rail li.s-running .num { border-color: var(--agent, var(--accent)); color: var(--agent, var(--accent)); animation: pulse 1.2s ease-in-out infinite; }
+  .rail li.s-done .num { background: var(--agent, var(--accent)); border-color: transparent; color: #071018; }
+  .rail li.s-bad .num { background: var(--bad); border-color: transparent; color: #071018; }
+  .rail li.s-done .rs { color: var(--muted); }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--agent, var(--accent)) 50%, transparent); } 50% { box-shadow: 0 0 0 6px transparent; } }
+  .stages { display: grid; gap: 16px; min-width: 0; }
+  .agents { display: grid; gap: 16px; }
+
+  /* ---------------------------------------------------------------- stage card */
+  .stage { scroll-margin-top: 76px; position: relative; border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; background: var(--panel); min-width: 0; }
+  .stage::before { content: ""; position: absolute; left: -1px; top: 18px; bottom: 18px; width: 3px; border-radius: 3px; background: var(--agent, var(--accent)); }
+  .stage-head { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 14px; align-items: center; }
+  .stage-no { font: 600 12px var(--mono); color: var(--agent, var(--accent)); border: 1px solid color-mix(in srgb, var(--agent, var(--accent)) 45%, transparent);
+    border-radius: 8px; padding: 6px 8px; }
+  .stage-head h4 { margin: 0; font-size: 18px; letter-spacing: .01em; }
+  .stage-head .field { color: var(--agent, var(--accent)); font-size: 13px; font-weight: 600; }
+  .stage-head .side { display: grid; justify-items: end; gap: 3px; text-align: right; }
+  .state { font: 12px var(--mono); color: var(--muted); }
+  .state.running { color: var(--agent, var(--accent)); }
+  .state.bad { color: var(--bad); }
+  .side a { font-size: 12.5px; }
+  .tracks { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
+  .mission { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--agent, var(--accent)) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--agent, var(--accent)) 25%, transparent); font-size: 14px; }
+  .mission b { color: var(--agent, var(--accent)); font: 600 11.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; margin-right: 8px; }
+  h6.sec { margin: 16px 0 8px; font: 600 11px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+  .oplog { list-style: none; margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--bg2); border: 1px solid var(--line); font: 12.5px/1.45 var(--mono); display: grid; gap: 3px; }
+  .op { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px; align-items: baseline; }
+  .op .tick { color: var(--good); } .op.err .tick { color: var(--bad); } .op.rec .tick { color: var(--warn); }
+  .op .what { color: var(--ink); }
+  .op code { color: var(--dim); margin-left: 8px; font-size: 11.5px; }
+  .op .ms { color: var(--muted); }
+  .op .why { grid-column: 2 / -1; color: var(--muted); font-size: 11.5px; }
+  .waiting { display: flex; align-items: center; gap: 10px; color: var(--agent, var(--accent)); }
+  .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--agent, var(--accent)) 30%, transparent); border-top-color: var(--agent, var(--accent)); animation: spin .8s linear infinite; flex: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .waiting small { color: var(--muted); }
+  .reveal { animation: rise .5s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .standby { margin-top: 6px; color: var(--dim); font-size: 13px; }
+
+  /* ---------------------------------------------------------------- outputs */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-top: 4px; }
+  .tile { background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+  .tile .k { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .tile .v { font-size: 22px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
   .tile .s { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
-  .views { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px 22px; margin-top: 14px; }
+  .tile.gauge { display: flex; align-items: center; gap: 12px; grid-column: span 2; }
+  .views { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px 22px; margin-top: 14px; }
   .views:empty { display: none; }
-  .view { min-width: 0; }
+  .view { min-width: 0; background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
   .view.wide { grid-column: 1 / -1; }
-  /* A bilateral question: the pair leads, the first country's whole day follows. */
-  .view.lead { border-left: 3px solid var(--accent); padding-left: 12px; }
+  .view.lead { border-left: 3px solid var(--agent, var(--accent)); }
   .view.lead .claim { margin: 0 0 10px; font-size: 15px; }
   .view.lead .baseline { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 10px; }
-  .view.secondary { border-top: 1px solid var(--line); padding-top: 12px; }
   .view.secondary .kpis { margin-top: 6px; }
   .view.secondary .tile .v { font-size: 16px; }
-  .view h5 { margin: 0 0 6px; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-  .view .note { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
-  .barlist { display: grid; grid-template-columns: minmax(90px, 46%) 1fr auto; gap: 5px 10px; align-items: center; font-size: 13px; }
+  .view h5 { margin: 0 0 8px; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .view .note { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+  .barlist { display: grid; grid-template-columns: minmax(80px, 40%) minmax(60px, 1fr) auto; gap: 6px 10px; align-items: center; font-size: 13px; }
   .barlist .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .barlist .track { height: 8px; border-radius: 0 4px 4px 0; background: var(--line); overflow: hidden; }
-  .barlist .track i { display: block; height: 100%; min-width: 2px; border-radius: 0 4px 4px 0; background: var(--accent); }
-  .barlist .val { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .barlist .track { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  .barlist .track i { display: block; height: 100%; min-width: 2px; border-radius: 4px; background: var(--agent, var(--accent)); transform-origin: left; animation: grow .8s ease both; }
+  .barlist .track i.neg { background: var(--bad); }
+  .barlist .val { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12.5px; }
   .barlist .row { display: contents; }
-  .barlist .row:hover .lbl, .barlist .row:hover .val { color: var(--ink); }
+  @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .stack { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--line); }
+  .stack i { display: block; height: 100%; transform-origin: left; animation: grow .8s ease both; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { padding: 2px 9px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line2); font-size: 12.5px; color: var(--ink); }
+  .chip.hi { border-color: var(--agent, var(--accent)); color: var(--agent, var(--accent)); }
+  .flag { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1px solid currentColor; }
+  .flag.warn { color: var(--warn); } .flag.good { color: var(--good); } .flag.bad { color: var(--bad); }
+  .scale { position: relative; height: 10px; border-radius: 5px; background: linear-gradient(90deg, #ef4444, #475569 50%, #22c55e); margin: 18px 0 6px; }
+  .scale b { position: absolute; top: -6px; width: 4px; height: 22px; border-radius: 2px; background: var(--ink); box-shadow: 0 0 0 3px var(--bg2); transform: translateX(-2px); }
+  .scale-l { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); }
+  .meter { height: 8px; border-radius: 4px; background: var(--line); position: relative; margin-top: 8px; }
+  .meter b { position: absolute; top: -4px; width: 4px; height: 16px; border-radius: 2px; background: var(--agent, var(--accent)); transform: translateX(-2px); }
+  svg.chart { display: block; width: 100%; height: auto; overflow: visible; }
+  svg.chart .grid { stroke: var(--line); stroke-width: 1; }
+  svg.chart .axis { fill: var(--dim); font: 11px var(--mono); }
+  svg.chart .band { fill: var(--agent, var(--accent)); fill-opacity: .14; }
+  svg.chart .ln { fill: none; stroke: var(--agent, var(--accent)); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+  svg.chart .ln.alt { stroke: var(--ink); stroke-opacity: .7; }
+  svg.chart .ln.dash { stroke-dasharray: 5 5; }
+  svg.chart .pt { fill: var(--agent, var(--accent)); }
+  svg.chart .pt.alt { fill: var(--ink); }
+  svg.chart .lab { fill: var(--ink); font: 600 11.5px system-ui, sans-serif; }
+  svg.chart .hit { fill: transparent; } svg.chart .hit:hover { fill: var(--agent, var(--accent)); fill-opacity: .4; }
+  /* pathLength="1" on the path makes the draw-in independent of the line's real length. */
+  svg.chart .ln.draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.4s ease forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  svg.gauge .bg { stroke: var(--line); } svg.gauge .fg { stroke: var(--agent, var(--accent)); } svg.gauge .ci { stroke: var(--ink); stroke-opacity: .35; }
+  svg.gauge text { fill: var(--ink); font: 700 17px system-ui, sans-serif; } svg.gauge .sm { fill: var(--muted); font: 10px var(--mono); }
+  svg.spark { display: block; overflow: visible; }
+  svg.spark .zero { stroke: var(--line2); stroke-width: 1; }
+  svg.spark .line { fill: none; stroke: var(--muted); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  svg.spark .end { fill: var(--agent, var(--accent)); }
+  svg.spark .hit { fill: transparent; } svg.spark .hit:hover { fill: var(--accent); fill-opacity: .35; }
+  svg.years rect { fill: var(--line); } svg.years rect.on { fill: var(--agent, var(--accent)); } svg.years text { fill: var(--dim); font: 10px var(--mono); }
   .events-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
-  .events-list li { border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; background: var(--bg); }
+  .events-list li { border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; background: var(--panel); }
   .events-list li.mistagged { border-color: var(--bad); }
   .events-list .what { margin: 4px 0 0; }
   .events-list .why { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); }
   .vbadge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; }
-  .vbadge.verified { color: var(--agree); } .vbadge.weak { color: var(--warn); } .vbadge.unverified { color: var(--muted); } .vbadge.mistagged { color: var(--bad); }
+  .vbadge.verified { color: var(--good); } .vbadge.weak { color: var(--warn); } .vbadge.unverified { color: var(--muted); } .vbadge.mistagged { color: var(--bad); }
+  .agent-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
   .scroll { overflow-x: auto; }
   table.ctable { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.ctable th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 4px 8px 4px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
-  table.ctable td { padding: 5px 8px 5px 0; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  table.ctable th { text-align: left; font-weight: 600; color: var(--muted); font-size: 11.5px; padding: 4px 10px 6px 0; border-bottom: 1px solid var(--line2); white-space: nowrap; }
+  table.ctable td { padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
   table.ctable td.out { color: var(--diverge); font-weight: 600; }
-  svg.spark { display: block; overflow: visible; }
-  svg.spark .zero { stroke: var(--line); stroke-width: 1; }
-  svg.spark .line { fill: none; stroke: var(--muted); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-  svg.spark .end { fill: var(--accent); }
-  svg.spark .hit { fill: transparent; }
-  svg.spark .hit:hover { fill: var(--accent); fill-opacity: .35; }
-  .claims { padding-left: 18px; margin: 14px 0 0; }
-  .claims li { margin: 8px 0; }
-  .claims li small { display: block; color: var(--muted); }
-  .claims .caveat { margin-top: 2px; }
-  .agent-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-  .agent-head h4 { margin: 0; font-size: 16px; }
-  .agent-head a { font-size: 13px; color: var(--accent); }
-  .agent ol { padding-left: 18px; margin: 10px 0 0; }
-  .agent li { margin: 8px 0; }
-  .agent li small { display: block; color: var(--muted); }
-  .muted { color: var(--muted); font-size: 13px; }
-  pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; max-height: 480px; overflow: auto; }
-  table.calls { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px; }
+  ul.plainlist { margin: 0; padding-left: 18px; } ul.plainlist li { margin: 4px 0; }
+
+  /* ---------------------------------------------------------------- findings */
+  .claims { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .claims li { padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg2); }
+  .claims li small { display: block; color: var(--dim); font: 11.5px var(--mono); margin-top: 4px; }
+  .confbar { display: inline-block; width: 60px; height: 5px; border-radius: 3px; background: var(--line); vertical-align: middle; margin-right: 6px; overflow: hidden; }
+  .confbar i { display: block; height: 100%; background: var(--agent, var(--accent)); }
+  .caveat { margin-top: 6px; font-size: 12.5px; color: var(--warn); }
+  details.more { margin-top: 8px; } details.more summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+  details.more .claims { margin-top: 8px; }
+
+  /* ---------------------------------------------------------------- tasking + assessment */
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-top: 12px; }
+  .assign { display: grid; gap: 6px; margin-top: 8px; }
+  .assign div { display: grid; grid-template-columns: 22px 150px 1fr; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--bg2); border: 1px solid var(--line); font-size: 13.5px; }
+  .assign div.off { opacity: .5; }
+  .assign .g { color: var(--agent); font-size: 15px; text-align: center; }
+  .assign b { color: var(--agent); }
+  .understand { display: flex; align-items: center; gap: 8px; }
+  .assessment h2 { margin: 6px 0 10px; font-size: 24px; line-height: 1.3; }
+  .assessment ul.summary { margin: 0; padding-left: 20px; } .assessment ul.summary li { margin: 6px 0; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  h3.sec { font: 600 11.5px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin: 22px 2px 10px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .card { background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .card.divergence { background: var(--diverge-soft); border-color: color-mix(in srgb, var(--diverge) 35%, transparent); }
+  .card.corroboration { background: var(--agree-soft); border-color: color-mix(in srgb, var(--agree) 30%, transparent); }
+  .card.cross_agent { background: var(--cross-soft); border-color: color-mix(in srgb, var(--cross) 35%, transparent); }
+  .kind { font: 600 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+  .divergence .kind { color: var(--diverge); } .corroboration .kind { color: var(--agree); } .cross_agent .kind { color: var(--cross); }
+  .card h4 { margin: 4px 0 6px; font-size: 15.5px; }
+  .card p { margin: 0; }
+  .conf { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+  .bar { flex: 0 0 90px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--accent); }
+  .badges { display: flex; gap: 4px; flex-wrap: wrap; }
+  .badge { font-size: 11.5px; padding: 1px 7px; border-radius: 5px; background: var(--panel2); border: 1px solid var(--line2); color: var(--ink); }
+  details.support { margin-top: 8px; font-size: 13px; color: var(--muted); }
+  details.support li { margin: 4px 0; }
+  details.tech { border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; background: var(--panel); }
+  details.tech summary { cursor: pointer; color: var(--muted); font: 600 12px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+  pre { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; background: var(--bg2); border: 1px solid var(--line); border-radius: 8px; padding: 12px; max-height: 480px; overflow: auto; }
+  table.calls { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
   table.calls td { padding: 3px 6px; border-top: 1px solid var(--line); font-family: var(--mono); }
-  .hidden { display: none; }
+  @media (max-width: 600px) { .console form { flex-direction: column; } .assign div { grid-template-columns: 22px 1fr; } .assign div span:last-child { grid-column: 2; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
 </style>
 </head>
 <body>
-<header>
-  <h1>Team 128 <span>· Geopolitical Intelligence · orchestrated briefing</span></h1>
-  <div class="pills" id="agentPills"><span class="pill">checking agents…</span></div>
+<header class="top">
+  <a class="brand" href="/"><span class="logo" aria-hidden="true">◉</span><b>GEOINT ENGINE</b><span>Team 128 · four agents, one picture</span></a>
+  <div class="topnav">
+    <a href="/">← Home</a><a href="/features">Play with the features</a>
+    <div class="pills" id="agentPills"><span class="pill">checking agents…</span></div>
+  </div>
 </header>
 <main>
-  <section class="ask">
+  <section class="console">
+    <div class="eyebrow">Mission input</div>
+    <h1>Point the engine at a country, a relationship or a scenario</h1>
+    <p class="sub">Four specialist agents each track one field of geopolitics. The engine breaks your input into a task for each of them, runs them one after another, shows what each one does and finds, then fuses their results into one assessment.</p>
     <form id="askForm">
-      <input type="text" id="question" autocomplete="off" placeholder="Ask about a country, a pair of countries, a disruption, or a trend…" value="How exposed is India right now?">
-      <button type="submit" id="askBtn">Ask</button>
+      <input type="text" id="question" autocomplete="off" aria-label="Target or scenario" placeholder="e.g. Which countries agree most with Iran on human rights? · What if China stops exporting electronics?" value="Which countries agree most with Iran on human rights?">
+      <button type="submit" id="askBtn" class="run-btn">Run analysis ▸</button>
     </form>
-    <div class="examples" id="examples"></div>
+    <div class="missions" id="examples"></div>
     <details class="opts">
-      <summary>Options</summary>
+      <summary>Run settings</summary>
       <div class="row">
         <span>Agents:</span>
         <label><input type="checkbox" name="agent" value="soft_power" checked> Soft Power</label>
@@ -160,115 +299,157 @@
       <div class="row">
         <label>Year <input type="number" id="year" min="1989" max="2030" placeholder="latest" style="width:90px"></label>
         <label>Sector <select id="sector"><option value="">auto</option><option>all</option><option>energy</option><option>agriculture</option><option>electronics</option></select></label>
-        <span class="muted">Options left blank are read from the question.</span>
+        <label><input type="checkbox" id="instant"> Show results at once (no step-by-step)</label>
+        <span class="muted">Settings left blank are read from your input.</span>
       </div>
     </details>
   </section>
 
-  <div class="status" id="status"></div>
+  <section id="fleet">
+    <div class="fleet-title">The agents</div>
+    <div class="fleet" id="fleetCards"></div>
+    <div class="how">
+      <div><b>1 · Tasking</b>Your input is parsed into an intent, target countries, a time window and a task for each agent that can contribute.</div>
+      <div><b>2 · Agents run in turn</b>Each agent runs its own models and data, and the screen shows every operation it performs and what it finds.</div>
+      <div><b>3 · Fusion</b>Claims are lined up by country and topic: where agents agree, where they disagree and what only the combination shows.</div>
+    </div>
+  </section>
 
-  <div id="result" class="hidden">
-    <section class="brief">
-      <h2 id="headline"></h2>
-      <p id="understood" class="muted"></p>
-      <ul id="summary"></ul>
-      <div class="meta" id="meta"></div>
-    </section>
+  <div class="runbar hidden" id="runbar">
+    <div class="status" id="status"></div>
+    <button type="button" class="ghost hidden" id="skipBtn">Skip to results ▸▸</button>
+  </div>
 
-    <div id="findingSections"></div>
-
-    <h3 class="sec">By agent</h3>
-    <div class="agents" id="agents"></div>
-
-    <h3 class="sec">How the question was handled</h3>
-    <div class="card" id="plan"></div>
-
-    <h3 class="sec">Raw response</h3>
-    <details class="card"><summary>Show JSON</summary><pre id="raw"></pre></details>
+  <div id="result" class="hidden run">
+    <aside class="rail"><span class="eyebrow">Run sequence</span><ol id="rail"></ol></aside>
+    <div class="stages">
+      <section class="stage tasking" id="tasking"></section>
+      <div class="agents" id="agents"></div>
+      <section class="stage assessment hidden" id="assessment"></section>
+      <details class="tech">
+        <summary>Technical trace</summary>
+        <h3 class="sec">How the input was handled</h3>
+        <div class="card" id="plan"></div>
+        <h3 class="sec">Raw response</h3>
+        <pre id="raw"></pre>
+      </details>
+    </div>
   </div>
 </main>
 
 <script>
-const LABELS = { soft_power: "Soft Power", policy_stance: "Policy Stance", trade_intelligence: "Trade", event_summarization: "Events" };
+// ============================================================================
+// The engine's agents. "tracks" says what each one covers in general; the
+// mission line on each stage says what it was asked to do for this input.
+// ============================================================================
+const AGENTS = {
+  soft_power: {
+    label: "Soft Power", field: "National influence and attraction", glyph: "✦",
+    tracks: "A composite Soft Power Index for 195 states (2000-2024) across five capital dimensions, Kalman-smoothed, with forecasts, SHAP driver attribution and peer similarity.",
+  },
+  policy_stance: {
+    label: "Policy Stance", field: "Diplomacy, UN voting and conflict", glyph: "⚖",
+    tracks: "A 1989-2025 conflict and UN General Assembly voting graph of 185 countries: voting blocs (model-based and discovered by community detection), voting partners, UCDP conflict records and issue stances.",
+  },
+  trade_intelligence: {
+    label: "Trade", field: "Economic exposure and supply chains", glyph: "⇄",
+    tracks: "A bilateral trade graph of 226 economies built from BACI (1995-2024): structural risk, trading blocs, leverage and dependence, sector supply fragility, shock propagation and forecasts.",
+  },
+  event_summarization: {
+    label: "Events", field: "Live news events (GDELT)", glyph: "◎",
+    tracks: "The daily GDELT event stream: volume and Goldstein tone, counterparts, themes from clustering and top events checked against their source articles, set against the 1990-2024 GGE relationship baseline.",
+  },
+};
+const ORDER = Object.keys(AGENTS);
+const LABELS = Object.fromEntries(ORDER.map((name) => [name, AGENTS[name].label]));
 const KIND_LABEL = { divergence: "Divergence", corroboration: "Corroboration", cross_agent: "Cross-agent" };
+const INTENT_LABEL = {
+  country_profile: "Country profile", bilateral: "Bilateral relationship", shock: "Disruption scenario", forecast: "Forecast",
+  blocs: "Bloc alignment", events: "Event monitoring", ranking: "Global ranking", event_history: "Event history search", vote_alignment: "UN voting alignment",
+};
+// Missions that show what only the engine can do: searching five years of daily
+// news, comparing every UN vote on a topic, and propagating a shock through trade.
 const EXAMPLES = [
-  "How exposed is India right now?",
-  "India and China relations",
-  "What if China stops exporting electronics?",
-  "Which countries are most dependent on trade?",
-  "Forecast Brazil exports to 2030",
-  "What happened in Iran yesterday?",
-  "Which bloc is Vietnam in?",
+  ["UN votes · who sides with Iran on human rights", "Which countries agree most with Iran on human rights?"],
+  ["UN votes · Russia on Ukraine since 2014", "Who votes with Russia on Ukraine since 2014?"],
+  ["History · New Zealand's most conflictual days, 5 years", "Which days did New Zealand have its most conflictual events in the last 5 years?"],
+  ["History · India's most hostile days, 2 years", "When was India most hostile in the past 2 years?"],
+  ["Shock · China halts electronics exports", "What if China stops exporting electronics?"],
+  ["Global · most trade-dependent economies", "Which countries are most dependent on trade?"],
 ];
 
+// ============================================================================
+// DOM helpers
+// ============================================================================
 const $ = (id) => document.getElementById(id);
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
   for (const [key, value] of Object.entries(attrs)) {
+    if (value == null) continue;
     if (key === "class") node.className = value;
     else if (key === "text") node.textContent = value;
     else node.setAttribute(key, value);
   }
-  for (const child of children.flat()) if (child != null) node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  for (const child of children.flat()) if (child != null && child !== false) node.append(child instanceof Node ? child : document.createTextNode(String(child)));
   return node;
 }
+const SVGNS = "http://www.w3.org/2000/svg";
+function svg(tag, attrs = {}, ...children) {
+  const node = document.createElementNS(SVGNS, tag);
+  for (const [key, value] of Object.entries(attrs)) if (value != null) node.setAttribute(key, value);
+  for (const child of children) if (child) node.append(child);
+  return node;
+}
+function svgText(attrs, text) { const node = svg("text", attrs); node.textContent = text; return node; }
+function svgTitle(text) { const node = svg("title"); node.textContent = text; return node; }
 // Agent text can carry light markdown (**bold**); render it as plain text.
 const plain = (text) => String(text ?? "").replace(/\*\*/g, "");
+const agentStyle = (name) => (AGENTS[name] ? `--agent: var(--c-${name})` : null);
 
-function confidence(value) {
-  const pct = Math.round((value || 0) * 100);
-  const bar = el("span", { class: "bar" }, el("i", { style: `width:${pct}%` }));
-  return el("div", { class: "conf" }, bar, `confidence ${(value || 0).toFixed(2)}`);
-}
-
-function badges(labels) {
-  return el("div", { class: "badges" }, (labels || []).map((label) => el("span", { class: "badge", text: label })));
-}
-
-function findingCard(finding) {
-  const card = el("article", { class: `card ${finding.kind}` },
-    el("div", { class: "kind", text: KIND_LABEL[finding.kind] || finding.kind }),
-    el("h4", { text: plain(finding.title) }),
-    el("p", { text: plain(finding.claim) }),
-  );
-  const row = confidence(finding.confidence);
-  row.append(badges(finding.agent_labels));
-  card.append(row);
-  if (finding.caveat) card.append(el("div", { class: "caveat", text: `Caveat: ${finding.caveat}` }));
-  if (finding.supporting?.length) {
-    const list = el("ul", {}, finding.supporting.map((s) =>
-      el("li", {}, el("strong", { text: `${s.agent_label}: ` }), plain(s.claim), el("br"), el("span", { text: `conf ${s.confidence} · ${s.reason || ""}` }))));
-    card.append(el("details", { class: "support" }, el("summary", { text: "What each agent said" }), list));
-  }
-  return card;
-}
-
-// ---------------------------------------------------------------- agent panels
-// Every agent gets the same frame: header, KPI tiles, agent-specific views,
-// every claim with its confidence and caveat, then the raw calls. The views
-// read the evidence each claim already carries; nothing here computes new facts.
 const isNum = (v) => typeof v === "number" && isFinite(v);
 const fmt = {
   pct: (v, d = 0) => (isNum(v) ? `${(v * 100).toFixed(d)}%` : null),
   signed: (v, d = 2) => (isNum(v) ? `${v >= 0 ? "+" : ""}${v.toFixed(d)}` : null),
-  int: (v) => (isNum(v) ? v.toLocaleString() : null),
+  int: (v) => (isNum(v) ? Math.round(v).toLocaleString("en-US") : null),
+  num: (v, d = 1) => (isNum(v) ? v.toFixed(d) : null),
   day: (d) => (typeof d === "string" && d.length === 8 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}` : null),
+  // BACI trade values are in thousands of US dollars.
+  usdK: (v) => {
+    if (!isNum(v)) return null;
+    const usd = v * 1000;
+    for (const [div, unit] of [[1e12, "T"], [1e9, "B"], [1e6, "M"], [1e3, "K"]]) if (Math.abs(usd) >= div) return `$${(usd / div).toFixed(usd / div >= 100 ? 0 : 1)} ${unit}`;
+    return `$${usd.toFixed(0)}`;
+  },
 };
 const firstOf = (insights, facet) => insights.find((i) => i.facet === facet);
 const byFacet = (insights, facet) => insights.filter((i) => i.facet === facet);
+const cap = (text) => (text ? text[0].toUpperCase() + text.slice(1) : "");
 
-function tile(label, value, sub) {
+function tile(label, value, sub, extra = "") {
   if (value == null || value === "") return null;
-  return el("div", { class: "tile" }, el("div", { class: "k", text: label }), el("div", { class: "v", text: String(value) }), sub ? el("div", { class: "s", text: sub }) : null);
+  return el("div", { class: `tile${extra ? ` ${extra}` : ""}` },
+    el("div", { class: "k", text: label }),
+    value instanceof Node ? value : el("div", { class: "v", text: String(value) }),
+    sub ? el("div", { class: "s", text: sub }) : null);
 }
-
+function kpiRow(tiles) {
+  const kept = tiles.filter(Boolean);
+  return kept.length ? el("div", { class: "kpis" }, kept) : null;
+}
 function view(title, body, { wide = false, note = null, id = null, extra = "" } = {}) {
   if (!body) return null;
   const attrs = { class: `view${wide ? " wide" : ""}${extra ? ` ${extra}` : ""}` };
   if (id) attrs["data-view"] = id;
   return el("div", attrs, el("h5", { text: title }), body, note ? el("p", { class: "note", text: note }) : null);
 }
+function views(list) {
+  const kept = list.filter(Boolean);
+  return kept.length ? el("div", { class: "views" }, kept) : null;
+}
 
+// ============================================================================
+// Charts. Each reads numbers the agents already returned; none computes facts.
+// ============================================================================
 // One series, one hue: bars grow from a shared baseline; the value is text.
 function barList(rows, { max } = {}) {
   rows = (rows || []).filter((r) => isNum(r.value));
@@ -279,17 +460,109 @@ function barList(rows, { max } = {}) {
     const tip = r.title || `${r.label}: ${r.display}`;
     return el("div", { class: "row", role: "listitem" },
       el("span", { class: "lbl", text: r.label, title: tip }),
-      el("span", { class: "track", title: tip }, el("i", { style: `width:${pct}%` })),
+      el("span", { class: "track", title: tip }, el("i", { class: r.negative ? "neg" : null, style: `width:${pct}%` })),
       el("span", { class: "val", text: r.display, title: tip }));
   }));
 }
 
-const SVGNS = "http://www.w3.org/2000/svg";
-function svg(tag, attrs = {}, ...children) {
-  const node = document.createElementNS(SVGNS, tag);
-  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
-  for (const child of children) if (child) node.append(child);
-  return node;
+function niceStep(span, ticks = 4) {
+  const raw = span / ticks, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  return (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+}
+
+// Line chart over years: solid history, dashed projection, shaded interval.
+function lineChart({ series = [], band = [], yFmt = (v) => v.toFixed(0), xFmt = (v) => String(v), clamp = null, w = 640, h = 230, label = "chart" }) {
+  const pts = series.flatMap((s) => s.points).concat(band.flatMap((b) => [{ x: b.x, y: b.lo }, { x: b.x, y: b.hi }]))
+    .filter((p) => isNum(p.x) && isNum(p.y));
+  if (pts.length < 2) return null;
+  const pad = { l: 48, r: 70, t: 14, b: 26 };
+  let x0 = Math.min(...pts.map((p) => p.x)), x1 = Math.max(...pts.map((p) => p.x));
+  let y0 = Math.min(...pts.map((p) => p.y)), y1 = Math.max(...pts.map((p) => p.y));
+  if (x0 === x1) { x0 -= 1; x1 += 1; }
+  const span = (y1 - y0) || Math.abs(y1) || 1;
+  y0 -= span * 0.08; y1 += span * 0.08;
+  if (clamp) { y0 = Math.max(clamp[0], y0); y1 = Math.min(clamp[1], y1); }
+  const step = niceStep(y1 - y0);
+  y0 = Math.floor(y0 / step) * step; y1 = Math.ceil(y1 / step) * step;
+  const X = (v) => pad.l + ((v - x0) / (x1 - x0)) * (w - pad.l - pad.r);
+  const Y = (v) => h - pad.b - ((v - y0) / (y1 - y0)) * (h - pad.t - pad.b);
+  const root = svg("svg", { class: "chart", viewBox: `0 0 ${w} ${h}`, role: "img", "aria-label": label });
+  for (let v = y0; v <= y1 + step / 2; v += step) {
+    root.append(svg("line", { class: "grid", x1: pad.l, x2: w - pad.r, y1: Y(v), y2: Y(v) }), svgText({ class: "axis", x: pad.l - 8, y: Y(v) + 4, "text-anchor": "end" }, yFmt(v)));
+  }
+  const yearStep = Math.max(1, Math.ceil((x1 - x0) / 7));
+  for (let v = Math.ceil(x0); v <= x1; v += yearStep) root.append(svgText({ class: "axis", x: X(v), y: h - 6, "text-anchor": "middle" }, xFmt(v)));
+  if (band.length >= 2) {
+    const good = band.filter((b) => isNum(b.lo) && isNum(b.hi));
+    const d = good.map((b, i) => `${i ? "L" : "M"}${X(b.x).toFixed(1)},${Y(b.hi).toFixed(1)}`).join("") +
+      good.slice().reverse().map((b) => `L${X(b.x).toFixed(1)},${Y(b.lo).toFixed(1)}`).join("") + "Z";
+    root.append(svg("path", { class: "band", d }));
+  }
+  for (const s of series) {
+    const p = s.points.filter((q) => isNum(q.x) && isNum(q.y));
+    if (p.length < 1) continue;
+    const alt = s.alt ? " alt" : "";
+    if (p.length > 1) root.append(svg("path", { class: `ln${alt}${s.dashed ? " dash" : " draw"}`, pathLength: s.dashed ? null : 1, d: p.map((q, i) => `${i ? "L" : "M"}${X(q.x).toFixed(1)},${Y(q.y).toFixed(1)}`).join("") }));
+    for (const q of p) root.append(svg("circle", { class: "hit", cx: X(q.x), cy: Y(q.y), r: 6 }, svgTitle(`${s.name ? `${s.name} · ` : ""}${xFmt(q.x)}: ${yFmt(q.y)}`)));
+    const last = p[p.length - 1];
+    root.append(svg("circle", { class: `pt${alt}`, cx: X(last.x), cy: Y(last.y), r: 3.5 }));
+    if (s.name) root.append(svgText({ class: "lab", x: X(last.x) + 7, y: Y(last.y) + 4 }, `${s.name} ${yFmt(last.y)}`));
+  }
+  return root;
+}
+
+// Half-ring gauge on a fixed scale, with the interval as a thin outer arc.
+function gauge(value, { min = 0, max = 100, lo = null, hi = null, text = null } = {}) {
+  if (!isNum(value)) return null;
+  const cx = 60, cy = 58, r = 46;
+  const ang = (v) => Math.PI * (1 - (Math.max(min, Math.min(max, v)) - min) / (max - min));
+  const pt = (a, rr = r) => `${(cx + rr * Math.cos(a)).toFixed(1)},${(cy - rr * Math.sin(a)).toFixed(1)}`;
+  const arc = (a0, a1, rr = r) => `M${pt(a0, rr)}A${rr},${rr} 0 0 1 ${pt(a1, rr)}`;
+  const root = svg("svg", { class: "gauge", width: 120, height: 66, viewBox: "0 0 120 66", role: "img", "aria-label": `${text ?? value} on a ${min}-${max} scale` },
+    svg("path", { class: "bg", d: arc(Math.PI, 0), fill: "none", "stroke-width": 9, "stroke-linecap": "round" }),
+    svg("path", { class: "fg", d: arc(Math.PI, ang(value)), fill: "none", "stroke-width": 9, "stroke-linecap": "round" }));
+  if (isNum(lo) && isNum(hi)) root.append(svg("path", { class: "ci", d: arc(ang(lo), ang(hi), r + 9), fill: "none", "stroke-width": 3 }));
+  root.append(svgText({ x: cx, y: cy - 4, "text-anchor": "middle" }, text ?? String(value)), svgText({ class: "sm", x: cx, y: cy + 8, "text-anchor": "middle" }, `${min}-${max}`));
+  return root;
+}
+
+// A 100% stacked bar with its legend.
+function stackBar(parts) {
+  parts = parts.filter((p) => isNum(p.value) && p.value > 0);
+  const total = parts.reduce((s, p) => s + p.value, 0);
+  if (!total) return null;
+  return el("div", {},
+    el("div", { class: "stack", role: "img", "aria-label": parts.map((p) => `${p.label} ${fmt.pct(p.value / total)}`).join(", ") },
+      parts.map((p) => el("i", { style: `width:${(p.value / total) * 100}%;background:${p.color}`, title: `${p.label}: ${p.display ?? p.value} (${fmt.pct(p.value / total)})` }))),
+    el("div", { class: "legend" }, parts.map((p) => el("span", {}, el("i", { style: `background:${p.color}` }), `${p.label} ${fmt.pct(p.value / total)}`))));
+}
+
+// Marker on a fixed scale (Goldstein runs -10 conflict to +10 cooperation).
+function scaleMarker(value, { min = -10, max = 10, left = "-10 conflict", right = "+10 cooperation" } = {}) {
+  if (!isNum(value)) return null;
+  const pos = ((Math.max(min, Math.min(max, value)) - min) / (max - min)) * 100;
+  return el("div", {}, el("div", { class: "scale", title: String(value) }, el("b", { style: `left:${pos}%` })),
+    el("div", { class: "scale-l" }, el("span", { text: left }), el("span", { text: "0" }), el("span", { text: right })));
+}
+
+// Where a rank sits in its field: rank 1 at the left.
+function rankMeter(rank, of) {
+  if (!isNum(rank) || !isNum(of) || of < 2) return null;
+  return el("div", { class: "meter", title: `#${rank} of ${of}` }, el("b", { style: `left:${((rank - 1) / (of - 1)) * 100}%` }));
+}
+
+// One cell per year; years with activity are lit.
+function yearStrip(active, from, to) {
+  const on = new Set((active || []).map(Number));
+  if (!on.size || !isNum(from) || !isNum(to) || to <= from) return null;
+  const n = to - from + 1, w = 640, cell = w / n;
+  const root = svg("svg", { class: "years chart", viewBox: `0 0 ${w} 34`, role: "img", "aria-label": `Active years: ${[...on].sort().join(", ")}` });
+  for (let y = from; y <= to; y += 1) {
+    root.append(svg("rect", { class: on.has(y) ? "on" : "", x: (y - from) * cell + 1, y: 0, width: Math.max(1, cell - 2), height: 16, rx: 2 }, svgTitle(`${y}${on.has(y) ? " · active" : ""}`)));
+  }
+  root.append(svgText({ x: 0, y: 31 }, String(from)), svgText({ x: w, y: 31, "text-anchor": "end" }, String(to)));
+  return root;
 }
 
 // GGE alignment series on its fixed -1..+1 scale, zero line for reference.
@@ -303,12 +576,14 @@ function sparkline(series, { lo = -1, hi = 1, w = 120, h = 28 } = {}) {
     svg("line", { class: "zero", x1: 0, x2: w, y1: y(0), y2: y(0) }),
     svg("path", { class: "line", d: pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.score).toFixed(1)}`).join("") }),
     svg("circle", { class: "end", cx: x(pts.length - 1), cy: y(last.score), r: 4 }));
-  pts.forEach((p, i) => {
-    const title = svg("title");
-    title.textContent = `${p.year}: ${fmt.signed(p.score, 3)}`;
-    root.append(svg("circle", { class: "hit", cx: x(i), cy: y(p.score), r: 5 }, title));
-  });
+  pts.forEach((p, i) => root.append(svg("circle", { class: "hit", cx: x(i), cy: y(p.score), r: 5 }, svgTitle(`${p.year}: ${fmt.signed(p.score, 3)}`))));
   return root;
+}
+
+function chips(items, highlight = []) {
+  const hi = new Set(highlight);
+  const kept = (items || []).filter(Boolean);
+  return kept.length ? el("div", { class: "chips" }, kept.map((t) => el("span", { class: `chip${hi.has(t) ? " hi" : ""}`, text: String(t) }))) : null;
 }
 
 function sourceLink(url) {
@@ -318,18 +593,18 @@ function sourceLink(url) {
   return el("a", { href: url, target: "_blank", rel: "noopener noreferrer", class: "muted", text: `${host} ↗` });
 }
 
-const VERIFY = {
-  verified: ["✓", "Verified in article"],
-  weak: ["◐", "Weakly supported"],
-  unverified: ["?", "Unverified"],
-  mistagged: ["✕", "Likely mis-tagged"],
-};
+// ============================================================================
+// Agent outputs. Each returns a list of blocks (KPI rows and views), revealed
+// one at a time during a run.
+// ============================================================================
+const nameOf = (plan, iso3) => (plan?.entities || []).find((e) => e.iso3 === iso3)?.name || iso3;
+
+const VERIFY = { verified: ["✓", "Verified in article"], weak: ["◐", "Weakly supported"], unverified: ["?", "Unverified"], mistagged: ["✕", "Likely mis-tagged"] };
 function verifyBadge(v) {
   const status = VERIFY[v?.status] ? v.status : "unverified";
   const [icon, label] = VERIFY[status];
   return el("span", { class: `vbadge ${status}` }, el("span", { "aria-hidden": "true", text: icon }), label + (v?.method === "url_only" ? " (URL check)" : ""));
 }
-
 function headlineList(heads) {
   return el("ol", { class: "events-list" }, heads.map((h) => {
     const e = h.evidence || {}, v = e.verification || {};
@@ -342,6 +617,8 @@ function headlineList(heads) {
   }));
 }
 
+const TONE_COLORS = { "strongly cooperative": "#22c55e", cooperative: "#86efac", neutral: "#64748b", tense: "#fbbf24", "highly conflictual": "#ef4444" };
+
 // The first country's whole GDELT day: all counterparts, all events.
 function eventsDay(ins, { bilateral = false } = {}) {
   const act = firstOf(ins, "event_activity")?.evidence || {};
@@ -351,26 +628,35 @@ function eventsDay(ins, { bilateral = false } = {}) {
     tile("Conflict / cooperation", fmt.pct(act.conflict_share) && `${fmt.pct(act.conflict_share)} / ${fmt.pct(act.cooperation_share)}`, "share of event types"),
     tile("Initiated", isNum(act.initiator_pct) ? `${act.initiator_pct}%` : null, "of the day's events"),
   ];
-  const views = [];
+  const out = [];
+  if (!bilateral && isNum(act.avg_goldstein)) {
+    const tones = Object.entries(act.tone_counts || {});
+    out.push(view("Tone of the day", el("div", {},
+      scaleMarker(act.avg_goldstein),
+      tones.length ? el("div", { style: "margin-top:14px" }, stackBar(tones.map(([k, v]) => ({ label: k, value: v, color: TONE_COLORS[k] || "#64748b" })))) : null),
+      { note: "Mean Goldstein score of the day's events, and how they split by tone." }));
+    const types = Object.entries(act.event_type_counts || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    if (types.length) out.push(view("What kind of events", barList(types.map(([k, v]) => ({ label: k, value: v, display: String(v) })))));
+  }
   const themes = firstOf(ins, "event_themes");
   if (themes) {
     const q = themes.evidence.cluster_quality;
     const note = q && isNum(q.silhouette)
       ? `Cluster quality: ${q.silhouette.toFixed(2)} · ${q.label} (shuffled baseline ${fmt.signed(q.silhouette_null)}, seed stability ${isNum(q.stability_ari) ? q.stability_ari.toFixed(2) : "n/a"})`
       : "Cluster quality: not available";
-    views.push(view("Themes", barList((themes.evidence.themes || []).map((t) => ({ label: t.label, value: t.share, display: `${fmt.pct(t.share)} · ${t.count}` })), { max: 1 }), { note }));
+    out.push(view("Themes", barList((themes.evidence.themes || []).map((t) => ({ label: t.label, value: t.share, display: `${fmt.pct(t.share)} · ${t.count}` })), { max: 1 }), { note }));
   }
   const split = firstOf(ins, "event_domestic_split");
   if (split) {
     const d = split.evidence.domestic || {}, i = split.evidence.international || {};
-    views.push(view("Domestic vs international", barList([
+    out.push(view("Domestic vs international", barList([
       { label: "Domestic", value: d.total, display: `${d.total} · Goldstein ${fmt.signed(d.avg_goldstein)}` },
       { label: "International", value: i.total, display: `${i.total} · Goldstein ${fmt.signed(i.avg_goldstein)}` },
     ]), { note: split.caveat }));
   }
   // In a bilateral answer the only headlines are the pair's, shown in its own view.
   const heads = bilateral ? [] : byFacet(ins, "event_headline");
-  if (heads.length) views.push(view("Top events, checked against their source", headlineList(heads), { wide: true }));
+  if (heads.length) out.push(view("Top events, checked against their source", headlineList(heads), { wide: true }));
   const partners = firstOf(ins, "event_partners")?.evidence?.partners || [];
   const baselines = Object.fromEntries(byFacet(ins, "relationship_baseline").map((b) => [(b.evidence.pair || [])[1], b.evidence]));
   if (partners.length) {
@@ -381,11 +667,11 @@ function eventsDay(ins, { bilateral = false } = {}) {
       const b = baselines[p.iso3];
       const g = p.avg_goldstein, avg = b?.avg_10yr;
       // Same thresholds as fusion's "out of character" check.
-      const out = isNum(avg) && ((avg >= 0.1 && g <= -1) || (avg <= -0.1 && g >= 1));
+      const outOf = isNum(avg) && ((avg >= 0.1 && g <= -1) || (avg <= -0.1 && g >= 1));
       const cells = [
         el("td", { text: p.iso3 }),
         el("td", { text: String(p.count) }),
-        el("td", { class: out ? "out" : "", text: `${fmt.signed(g, 1)}${out ? (g < 0 ? " ↓ out of character" : " ↑ warmer than history") : ""}` }),
+        el("td", { class: outOf ? "out" : "", text: `${fmt.signed(g, 1)}${outOf ? (g < 0 ? " ↓ out of character" : " ↑ warmer than history") : ""}` }),
       ];
       if (!bilateral) {
         cells.push(
@@ -395,11 +681,11 @@ function eventsDay(ins, { bilateral = false } = {}) {
       }
       return el("tr", {}, cells);
     });
-    views.push(view(bilateral ? "Most active counterparts today" : "Counterparts: today vs 1990-2024", el("div", { class: "scroll" }, el("table", { class: "ctable" },
+    out.push(view(bilateral ? "Most active counterparts today" : "Counterparts: today vs 1990-2024", el("div", { class: "scroll" }, el("table", { class: "ctable" },
       el("tr", {}, head.map((t) => el("th", { text: t }))),
       rows)), { wide: true, note: bilateral ? null : "GGE baselines are fetched for the three most active counterparts." }));
   }
-  return { kpis, views };
+  return { kpis, views: out };
 }
 
 // A bilateral question: the pair's own answer, then the whole day as context.
@@ -407,7 +693,6 @@ function eventsPair(ins, plan) {
   const pair = firstOf(ins, "bilateral_events");
   const ev = pair.evidence || {};
   const [a, b] = ev.pair || [];
-  const nameOf = (iso3) => (plan.entities || []).find((e) => e.iso3 === iso3)?.name || iso3;
   const base = byFacet(ins, "relationship_baseline").find((x) => (x.evidence.pair || [])[1] === b)?.evidence;
   const heads = byFacet(ins, "event_headline").filter((h) => h.evidence?.pair);
   const none = firstOf(ins, "bilateral_headlines");
@@ -417,206 +702,769 @@ function eventsPair(ins, plan) {
     tile("GGE baseline", ev.baseline_label || "not available", isNum(ev.avg_10yr) ? `10-yr avg ${fmt.signed(ev.avg_10yr, 3)} · trend ${ev.trend}` : null),
   ];
   const spark = base ? sparkline(base.series, { w: 240, h: 40 }) : null;
-  const relationship = view(`Relationship: ${nameOf(a)} and ${nameOf(b)}`, el("div", {},
+  const relationship = view(`Relationship: ${nameOf(plan, a)} and ${nameOf(plan, b)}`, el("div", {},
     el("p", { class: "claim", text: plain(pair.claim) }),
     spark ? el("div", { class: "baseline" }, spark, el("span", { class: "muted", text: `GGE alignment ${base.series[0].year}-${base.series[base.series.length - 1].year}, -1 (adversarial) to +1 (aligned)` })) : null,
-    el("h5", { text: `Top events involving both` }),
+    el("h5", { text: "Top events involving both" }),
     heads.length ? headlineList(heads) : el("p", { class: "muted", text: plain(none?.claim || "None of the day's top events involve both countries.") })),
     { wide: true, id: "relationship", extra: "lead" });
   const day = eventsDay(ins, { bilateral: true });
   const dayKpis = day.kpis.filter(Boolean);
-  const context = view(`${nameOf(a)}'s whole day, all counterparts (context)`,
+  const context = view(`${nameOf(plan, a)}'s whole day, all counterparts (context)`,
     dayKpis.length ? el("div", { class: "kpis" }, dayKpis) : el("span"),
     { wide: true, id: "day-activity", extra: "secondary", note: plain(firstOf(ins, "event_activity")?.claim || "") });
   return { kpis, views: [relationship, context, ...day.views] };
 }
 
-const VIEWS = {
+// A search of the day-by-day history: when, how bad, and what happened.
+function eventsHistory(ins, plan) {
+  const days = byFacet(ins, "event_extreme_day").map((d) => d.evidence).sort((a, b) => a.rank - b.rank);
+  const severe = firstOf(ins, "event_extreme_events")?.evidence?.events || [];
+  const base = firstOf(ins, "event_history_baseline")?.evidence;
+  const coop = plan?.direction === "cooperation";
+  const worst = days[0];
+  const cov = base?.coverage;
+  const kpis = [
+    worst && tile(coop ? "Most cooperative day" : "Most conflictual day", fmt.day(worst.date), `Goldstein ${fmt.signed(worst.avg_goldstein)} · ${fmt.int(worst.events)} events`),
+    worst && base && tile("Against the range", fmt.signed(worst.avg_goldstein - base.avg_goldstein), `range average ${fmt.signed(base.avg_goldstein)}`),
+    base && tile("Typical day", `${fmt.int(base.events_per_day)} events`, `${fmt.pct(base.conflict_share)} conflictual`),
+    cov && tile("Days searched", `${fmt.int(cov.days_indexed)} of ${fmt.int(cov.days_in_range)}`, cov.complete ? "the whole range" : `index still building · ${fmt.day(cov.first) || "?"} to ${fmt.day(cov.last) || "?"}`),
+  ];
+  const out = [];
+  if (base?.series?.length) {
+    const marks = new Set(days.map((d) => d.date));
+    const points = base.series.map((p) => ({ x: Date.UTC(+p.start.slice(0, 4), +p.start.slice(4, 6) - 1, +p.start.slice(6)) / 864e5, y: p.avg_goldstein }));
+    // x counts days since 1970, labelled as dates.
+    const asDate = (v) => new Date(Math.round(v) * 864e5).toISOString().slice(0, { year: 4, month: 7 }[base.series_period] || 10);
+    const chart = lineChart({ series: [{ points }], yFmt: (v) => v.toFixed(1), xFmt: asDate, label: "Mean Goldstein over the range" });
+    out.push(view(`Mean Goldstein per ${base.series_period || "week"}`, chart, { wide: true, note: `${marks.size} ranked day${marks.size === 1 ? "" : "s"} below. Below 0 leans conflictual, above 0 cooperative.` }));
+  }
+  if (days.length) {
+    out.push(view(coop ? "The most cooperative days" : "The most conflictual days", el("div", { class: "scroll" }, el("table", { class: "ctable" },
+      el("tr", {}, ["#", "Day", "Mean Goldstein", "Events", "Conflictual", coop ? "Most cooperative event" : "Most severe event"].map((t) => el("th", { text: t }))),
+      days.map((d) => {
+        const top = (d.top_events || [])[0];
+        return el("tr", {},
+          el("td", { text: String(d.rank) }), el("td", { text: fmt.day(d.date) }), el("td", { class: "out", text: fmt.signed(d.avg_goldstein) }),
+          el("td", { text: fmt.int(d.events) }), el("td", { text: fmt.pct(d.conflict_share) }),
+          el("td", { style: "white-space:normal" }, top ? `${top.actor1} · ${top.event_type} · ${top.actor2} (${fmt.signed(top.goldstein, 0)}, ${top.num_articles ?? "?"} articles) ` : "—", top ? sourceLink(top.url) : null));
+      }))), { wide: true, note: `Only days with at least ${base?.min_events ?? "a few"} events are ranked, so one stray event cannot make a day.` }));
+  }
+  if (severe.length) {
+    out.push(view(coop ? "Most cooperative single events" : "Most severe single events", el("ol", { class: "events-list" }, severe.map((e) => el("li", {},
+      el("div", { class: "agent-head" }, el("span", { class: "vbadge unverified", text: `${fmt.day(e.date)} · Goldstein ${fmt.signed(e.goldstein, 0)}` }), el("span", { class: "muted", text: `${e.event_type} · ${e.num_articles ?? "?"} articles` })),
+      el("p", { class: "story", text: `${e.actor1} → ${e.actor2}` }), sourceLink(e.url)))), { wide: true, note: "As GDELT coded them, not checked against the articles: open the sources." }));
+  }
+  return { kpis, views: out };
+}
+
+const OUTPUTS = {
   event_summarization(ins, plan) {
-    if (plan?.intent === "bilateral" && firstOf(ins, "bilateral_events")) return eventsPair(ins, plan);
-    return eventsDay(ins);
+    if (plan?.intent === "event_history") { const h = eventsHistory(ins, plan); return [kpiRow(h.kpis), views(h.views)]; }
+    const parts = plan?.intent === "bilateral" && firstOf(ins, "bilateral_events") ? eventsPair(ins, plan) : eventsDay(ins);
+    return [kpiRow(parts.kpis), views(parts.views)];
   },
 
-  trade_intelligence(ins) {
-    const risk = firstOf(ins, "trade_exposure")?.evidence, bloc = firstOf(ins, "trade_alignment")?.evidence, lev = firstOf(ins, "trade_dependence")?.evidence;
-    const kpis = [
-      tile("Trade risk rank", risk && `#${risk.rank} of ${risk.countries_ranked}`, risk && isNum(risk.trade_concentration) ? `partner concentration ${risk.trade_concentration.toFixed(2)}` : null),
-      tile("Trading bloc", bloc && `${bloc.bloc_name}-anchored`, bloc && `${bloc.bloc_size} members · ${fmt.pct(bloc.internal_trade_share)} internal trade`),
-      tile("Most critical partner", lev?.most_critical_partner, lev && `${fmt.pct(lev.critical_partner_dependence, 1)} of its trade`),
-      tile("Net leverage", lev && fmt.signed(lev.net_leverage), lev && `dominates ${lev.partners_dominated} · depends on ${lev.partners_dependent_on}`),
-    ];
-    const views = [];
-    if (lev) {
-      views.push(view("Most dependent on (share of its trade)", barList((lev.vulnerable_to || []).map((r) => ({ label: r.leverage_holder, value: r.exposed_dependence, display: fmt.pct(r.exposed_dependence, 1) })))));
-      views.push(view("Holds leverage over (their dependence)", barList((lev.holds_leverage_over || []).map((r) => ({ label: r.exposed_country, value: r.exposed_dependence, display: fmt.pct(r.exposed_dependence, 1) })))));
+  soft_power(ins, plan) {
+    const influence = byFacet(ins, "influence"), trends = byFacet(ins, "influence_trend");
+    const main = influence[0]?.evidence, trend = trends[0]?.evidence;
+    const outlook = firstOf(ins, "influence_outlook")?.evidence;
+    const horizon = (outlook?.forecast || []).slice(-1)[0];
+    const pair = firstOf(ins, "bilateral_influence");
+    const blocks = [];
+    // A ranking: the field itself.
+    if (!plan?.entities?.length && influence.length > 2) {
+      blocks.push(views([view("Soft Power Index, top of the field", barList(influence.slice(0, 12).map((i) => ({ label: i.entity_name || i.entity_iso3, value: i.evidence.score, display: `${fmt.num(i.evidence.score)} · #${i.evidence.rank}` })), { max: 100 }), { wide: true })]));
+      return blocks;
     }
-    const fragile = byFacet(ins, "supply_fragility");
-    if (fragile.length) {
-      views.push(view("Sector fragility (0-1)", barList(fragile.map((f) => ({ label: f.evidence.sector, value: f.evidence.fragility_score, display: `${f.evidence.fragility_score.toFixed(2)} · top ${f.evidence.top_supplier || "?"} ${fmt.pct(f.evidence.top_supplier_share) || ""}` })), { max: 1 })));
+    const scoreTile = main && el("div", { class: "tile gauge" },
+      gauge(main.score, { lo: main.ci_lower, hi: main.ci_upper, text: fmt.num(main.score) }),
+      el("div", {}, el("div", { class: "k", text: "Soft Power score" }), el("div", { class: "s", text: `95% interval ${fmt.num(main.ci_lower)}-${fmt.num(main.ci_upper)} · ${main.year}` }),
+        el("div", { class: "s", text: `${main.stability_class || ""} · ${main.volatility_tier || ""} volatility` })));
+    blocks.push(kpiRow([
+      scoreTile,
+      main && tile("Global rank", `#${main.rank}`, `of ${main.of} states`),
+      trend && tile("Ten-year change", fmt.signed(trend.delta, 1), `${trend.from_year}-${trend.to_year}, ${trend.direction}`),
+      horizon && tile("Forecast", fmt.num(horizon.score), `${horizon.year} · interval ${fmt.num(horizon.lo)}-${fmt.num(horizon.hi)}`),
+      pair && tile("Gap between the pair", fmt.num(Math.abs(pair.evidence.gap)), pair.evidence.intervals_overlap ? "intervals overlap: not decisive" : "intervals apart: decisive"),
+    ]));
+    // Trajectory: every country's history, plus the first one's forecast band.
+    const series = trends.filter((t) => t.evidence.series?.length).map((t, i) => ({
+      name: nameOf(plan, t.entity_iso3) || t.entity_name, alt: i > 0, points: t.evidence.series.map((p) => ({ x: p.year, y: p.score })),
+    }));
+    let band = [];
+    if (outlook?.forecast?.length && series.length) {
+      const last = series[0].points[series[0].points.length - 1];
+      series.push({ points: [last, ...outlook.forecast.map((f) => ({ x: f.year, y: f.score }))], dashed: true });
+      band = outlook.forecast.map((f) => ({ x: f.year, lo: f.lo, hi: f.hi }));
     }
-    const shock = byFacet(ins, "shock_impact").filter((s) => isNum(s.evidence?.impact_score));
-    if (shock.length) {
-      views.push(view("Shock impact by economy", barList(shock.map((s) => ({ label: s.entity_name, value: s.evidence.impact_score, display: s.evidence.impact_score.toFixed(3) })))));
+    const chart = lineChart({ series, band, yFmt: (v) => v.toFixed(0), clamp: [0, 100], label: "Soft Power score over time" });
+    const out = [];
+    if (chart) out.push(view(outlook ? "Score trajectory and Kalman forecast" : "Score trajectory", chart, { wide: true, note: outlook ? "Solid: Kalman-smoothed history. Dashed: forecast, shaded by its 95% interval." : "Kalman-smoothed composite score, 0-100." }));
+    const drivers = firstOf(ins, "influence_drivers")?.evidence;
+    if (drivers?.drivers?.length) {
+      out.push(view("What drives the score (SHAP)", barList(drivers.drivers.slice(0, 7).map((d) => ({
+        label: d.feature, value: d.shap, negative: d.direction === "down", display: `${d.direction === "down" ? "−" : "+"}${Math.abs(d.shap).toFixed(2)}${d.dimension ? ` · ${d.dimension}` : ""}`,
+      }))), { note: isNum(drivers.meta_feature_share) ? `Indicator drivers only; the model's own lagged-score and time terms carry ${fmt.pct(drivers.meta_feature_share)} of the attribution.` : null }));
     }
-    return { kpis, views };
-  },
-
-  soft_power(ins) {
-    const inf = firstOf(ins, "influence")?.evidence, trend = firstOf(ins, "influence_trend")?.evidence;
-    const outlook = (firstOf(ins, "influence_outlook")?.evidence?.forecast || []).slice(-1)[0];
-    const kpis = [
-      tile("Soft Power score", inf && isNum(inf.score) ? `${inf.score.toFixed(1)} / 100` : null, inf && `#${inf.rank} of ${inf.of} · ${inf.year}`),
-      tile("Change", trend && fmt.signed(trend.delta, 1), trend && `${trend.from_year}-${trend.to_year}, ${trend.direction}`),
-      tile("Forecast", outlook && isNum(outlook.score) ? outlook.score.toFixed(1) : null, outlook && `${outlook.year} · interval ${outlook.lo?.toFixed(1)}-${outlook.hi?.toFixed(1)}`),
-    ];
-    const drivers = firstOf(ins, "influence_drivers")?.evidence?.drivers || [];
     const peers = firstOf(ins, "influence_peers")?.evidence?.peers || [];
-    return {
-      kpis,
-      views: [
-        view("Top drivers (mean |SHAP|)", barList(drivers.slice(0, 6).map((d) => ({ label: d.feature, value: d.shap, display: d.shap.toFixed(2) })))),
-        view("Closest profiles (similarity)", barList(peers.slice(0, 6).map((p) => ({ label: p.iso3, value: p.similarity, display: p.similarity.toFixed(2) })), { max: 1 })),
-      ],
-    };
+    if (peers.length) out.push(view("Closest soft-power profiles", barList(peers.slice(0, 7).map((p) => ({ label: `${p.iso3} · #${p.rank}`, value: p.similarity, display: p.similarity.toFixed(2) })), { max: 1 })));
+    blocks.push(views(out));
+    return blocks;
   },
 
-  policy_stance(ins) {
-    const al = firstOf(ins, "diplomatic_alignment")?.evidence, conflict = firstOf(ins, "conflict_exposure")?.evidence;
-    const kpis = [
-      tile("UN bloc", al?.bloc, al?.provenance && `provenance: ${al.provenance}`),
-      tile("Conflict records", conflict && fmt.int(conflict.conflict_records), conflict && `${fmt.int(conflict.deaths)} deaths`),
-      tile("Deaths, last 5 years", conflict && fmt.int(conflict.recent_deaths_5y)),
-    ];
-    const partners = firstOf(ins, "diplomatic_partners")?.evidence?.partners || [];
-    return {
-      kpis,
-      views: [view("Closest UN voting partners (agreement)", barList(partners.slice(0, 6).map((p) => ({ label: p.name, value: p.un_agree_rate, display: fmt.pct(p.un_agree_rate) })), { max: 1 }))],
-    };
+  policy_stance(ins, plan) {
+    const blocks = plan?.intent === "vote_alignment" ? voteAlignmentBlocks(ins, plan) : [];
+    return [...blocks, ...policyProfile(ins, plan)];
+  },
+
+  trade_intelligence(ins, plan) {
+    return tradeOutputs(ins, plan);
   },
 };
 
-function claimList(insights) {
-  return el("ol", { class: "claims" }, insights.map((item) => {
-    const row = el("li", {}, plain(item.claim));
-    const link = sourceLink(item.evidence?.url);
-    if (link) row.append(" ", link);
-    row.append(el("small", { text: `${item.facet || ""} · conf ${Number(item.confidence).toFixed(2)} · ${item.reason || ""}` }));
-    if (item.caveat) row.append(el("div", { class: "caveat", text: `Caveat: ${item.caveat}` }));
-    return row;
-  }));
+// "Who votes like X at the UN (on a topic)": the ranking, the named pair, X's own votes.
+function voteAlignmentBlocks(ins, plan) {
+  const top = firstOf(ins, "vote_alignment")?.evidence, low = firstOf(ins, "vote_opposition")?.evidence;
+  const pairs = byFacet(ins, "vote_pair").map((p) => p.evidence);
+  const base = top || low || pairs[0];
+  if (!base) return [];
+  const who = plan.entities?.[0]?.name || "it";
+  const about = plan.topic ? ` on ${plan.topic}` : "";
+  const label = (r) => r.country;
+  const own = base.own_votes || {};
+  const kpis = kpiRow([
+    tile("Resolutions compared", fmt.int(base.resolutions), base.years?.length === 2 ? `${base.years[0]}-${base.years[1]}${about}` : about.trim()),
+    top?.ranking?.[0] && tile("Votes most like it", label(top.ranking[0]), `${fmt.pct(top.ranking[0].agreement)} of ${fmt.int(top.ranking[0].shared)} shared votes`),
+    low?.ranking?.[0] && tile("Votes least like it", label(low.ranking[0]), `${fmt.pct(low.ranking[0].agreement)} same · opposite on ${fmt.int(low.ranking[0].opposed)}`),
+    pairs[0] && tile(`With ${label(pairs[0])}`, fmt.pct(pairs[0].agreement), `same vote on ${fmt.int(pairs[0].shared)} shared resolutions`),
+    tile("Countries compared", fmt.int(base.countries_compared)),
+  ]);
+  const out = [];
+  if (top?.ranking?.length) {
+    out.push(view(`Vote most like ${who}${about}`, barList(top.ranking.map((r) => ({ label: label(r), value: r.agreement, display: `${fmt.pct(r.agreement)} · ${fmt.int(r.shared)} votes` })), { max: 1 }),
+      { note: "Share of shared resolutions where the country cast the same vote: yes, no or abstain." }));
+  }
+  if (low?.ranking?.length) {
+    out.push(view(`Vote least like ${who}${about}`, barList(low.ranking.map((r) => ({ label: label(r), value: r.agreement, negative: true, display: `${fmt.pct(r.agreement)} · opposite on ${fmt.int(r.opposed)}` })), { max: 1 }),
+      { note: "\"Opposite\" counts resolutions where one voted yes and the other no." }));
+  }
+  const cast = (own.yes || 0) + (own.no || 0) + (own.abstain || 0);
+  if (cast) {
+    out.push(view(`How ${who} itself voted${about}`, el("div", {},
+      stackBar([{ label: "Yes", value: own.yes, color: "#4ade80" }, { label: "Abstain", value: own.abstain, color: "#94a3b8" }, { label: "No", value: own.no, color: "#f87171" }]),
+      base.top_topics?.length ? el("div", { style: "margin-top:12px" }, barList(base.top_topics.slice(0, 6).map((t) => ({ label: t.topic.split("|")[0].toLowerCase(), value: t.count, display: `${t.count}` })))) : null)));
+  }
+  return [kpis, views(out)];
 }
 
-function renderAgents(agents, order, plan = {}) {
-  const box = $("agents");
-  box.replaceChildren();
-  for (const name of order) {
-    const result = agents[name];
-    if (!result) continue;
-    const ok = result.status === "ok" || result.status === "partial";
-    const head = el("div", { class: "agent-head" },
-      el("h4", { text: LABELS[name] || name }),
-      el("span", { class: "muted", text: `${result.status} · ${Math.round(result.latency_ms)} ms · ${result.insight_count} insights` }),
-    );
-    if (result.dashboard_url) head.append(el("a", { href: result.dashboard_url, target: "_blank", rel: "noopener", text: "Open module dashboard ↗" }));
-    const card = el("article", { class: "card agent panel" }, head);
-    if (result.error) card.append(el("p", { class: "caveat", text: result.error }));
-    for (const note of result.notes || []) card.append(el("p", { class: "muted", text: note }));
-    const insights = result.envelope?.insights || [];
-    if (ok && insights.length) {
-      let parts = { kpis: [], views: [] };
-      try {
-        if (VIEWS[name]) parts = VIEWS[name](insights, plan);
-      } catch (err) {
-        // An unexpected response shape costs this panel its views, not the briefing.
-        console.warn(`views for ${name} failed`, err);
-      }
-      const kpis = (parts.kpis || []).filter(Boolean), views = (parts.views || []).filter(Boolean);
-      if (kpis.length) card.append(el("div", { class: "kpis" }, kpis));
-      if (views.length) card.append(el("div", { class: "views" }, views));
-      card.append(claimList(insights));
+const OUTPUTS_MORE = {
+  policyProfile(ins, plan) {
+    const aligns = byFacet(ins, "diplomatic_alignment"), al = aligns[0]?.evidence;
+    const conflict = firstOf(ins, "conflict_exposure")?.evidence, blocs = firstOf(ins, "diplomatic_blocs")?.evidence;
+    const stance = firstOf(ins, "issue_stance")?.evidence, pairD = firstOf(ins, "bilateral_diplomacy")?.evidence;
+    const blocks = [];
+    const overridden = al && al.published_bloc && al.model_bloc && al.published_bloc !== al.model_bloc;
+    blocks.push(kpiRow([
+      al && tile("UN voting bloc", al.bloc, overridden ? `published as ${al.published_bloc}; the vote model says ${al.model_bloc}` : al.provenance && `basis: ${al.provenance.replace(/_/g, " ")}`),
+      blocs && tile("Discovered cluster", `${blocs.cluster_size} members`, `${blocs.dominant_bloc_in_cluster || "?"} · ${blocs.method_agrees ? "agrees with" : "differs from"} the model bloc`),
+      conflict && isNum(conflict.conflict_records) && tile("Conflict records", fmt.int(conflict.conflict_records), `${fmt.int(conflict.deaths)} deaths since 1989`),
+      conflict && isNum(conflict.recent_deaths_5y) && tile("Deaths, last 5 active years", fmt.int(conflict.recent_deaths_5y)),
+      pairD && tile("Vote match, the pair", isNum(pairD.metrics?.vote_match_rate) ? `${pairD.metrics.vote_match_rate.toFixed(0)}%` : null, pairD.metrics?.same_bloc ? `same bloc · ${pairD.metrics.bloc_a}` : `${pairD.metrics?.bloc_a} vs ${pairD.metrics?.bloc_b}`),
+    ]));
+    const out = [];
+    if (pairD) {
+      const m = pairD.metrics || {};
+      const drift = isNum(m.early_vote_agreement) && isNum(m.recent_vote_agreement)
+        ? barList([{ label: "Early agreement", value: m.early_vote_agreement, display: `${m.early_vote_agreement.toFixed(1)}%` }, { label: "Recent agreement", value: m.recent_vote_agreement, display: `${m.recent_vote_agreement.toFixed(1)}%` }], { max: 100 }) : null;
+      out.push(view(`Diplomatic relationship: ${(pairD.pair || []).map((c) => nameOf(plan, c)).join(" and ")}`, el("div", {},
+        drift, (pairD.module_summary || []).length ? el("ul", { class: "plainlist", style: "margin-top:10px" }, pairD.module_summary.map((t) => el("li", { text: plain(t) }))) : null),
+        { wide: true, note: isNum(m.vote_drift) ? `Vote drift ${fmt.signed(m.vote_drift, 1)} points · profile similarity ${fmt.num(m.similarity, 2)} · ${m.shared_conflicts ?? 0} shared conflicts` : null }));
     }
-    const meta = result.envelope?.metadata;
-    const calls = el("table", { class: "calls" }, (result.calls || []).map((c) =>
-      el("tr", {}, el("td", { text: c.method }), el("td", { text: c.path }), el("td", { text: c.status ?? "—" }), el("td", { text: `${c.ms} ms` }))));
-    card.append(el("details", { class: "support" }, el("summary", { text: `Calls and metadata (${(result.calls || []).length} calls)` }),
-      calls, meta ? el("pre", { text: JSON.stringify(meta, null, 2) }) : null));
-    box.append(card);
+    if (aligns.length > 1) {
+      out.push(view("Bloc of each country", el("div", { class: "kpis" }, aligns.map((a) => tile(nameOf(plan, a.entity_iso3), a.evidence.bloc, a.evidence.provenance?.replace(/_/g, " "))))));
+    }
+    if (stance?.vote_breakdown) {
+      const vb = stance.vote_breakdown;
+      const topics = Object.entries(stance.top_topics || {}).slice(0, 5);
+      out.push(view(`UN General Assembly votes (${fmt.int(stance.total_votes)})`, el("div", {},
+        stackBar([{ label: "Yes", value: vb.yes, color: "#4ade80" }, { label: "Abstain", value: vb.abstain, color: "#94a3b8" }, { label: "No", value: vb.no, color: "#f87171" }]),
+        topics.length ? el("div", { style: "margin-top:14px" }, barList(topics.map(([k, v]) => ({ label: k.toLowerCase(), value: v, display: `${v} resolutions` })))) : null)));
+    }
+    const partners = firstOf(ins, "diplomatic_partners")?.evidence?.partners || [];
+    if (partners.length) {
+      out.push(view("Closest UN voting partners", barList(partners.slice(0, 7).map((p) => ({ label: p.name, value: p.un_agree_rate, display: `${fmt.pct(p.un_agree_rate)}${p.conflict_count ? ` · ${p.conflict_count} conflicts` : ""}` })), { max: 1 }),
+        { note: "Share of UN votes cast the same way; conflicts are shared UCDP records." }));
+    }
+    if (conflict?.active_years?.length) {
+      out.push(view("Conflict activity, 1989-2024", el("div", {}, yearStrip(conflict.active_years, 1989, 2024),
+        conflict.top_issues?.length ? el("div", { style: "margin-top:10px" }, chips(conflict.top_issues)) : null), { note: "Lit years have UCDP conflict records involving this country." }));
+    }
+    const outlook = firstOf(ins, "conflict_outlook")?.evidence;
+    if (outlook?.forecast?.length) {
+      const chart = lineChart({ series: [{ points: outlook.forecast.map((f) => ({ x: f.year, y: f.forecast })), dashed: true, name: "projected" }], yFmt: (v) => v.toFixed(1), label: "Conflict-activity projection" });
+      out.push(view(`Conflict-activity outlook (${outlook.trend})`, chart));
+    }
+    if (al?.members_sample?.length) out.push(view(`Who else is in the ${al.bloc}`, chips(al.members_sample, [al.module_name]), { note: isNum(al.bloc_size) ? `${al.bloc_size} members in total; a sample is shown.` : null }));
+    blocks.push(views(out));
+    return blocks;
+  },
+
+  tradeOutputs(ins, plan) {
+    const risk = firstOf(ins, "trade_exposure")?.evidence, bloc = firstOf(ins, "trade_alignment")?.evidence, lev = firstOf(ins, "trade_dependence")?.evidence;
+    const outlook = firstOf(ins, "trade_outlook")?.evidence, pairDep = firstOf(ins, "bilateral_trade_dependence")?.evidence, pairBloc = firstOf(ins, "bilateral_trade_bloc")?.evidence;
+    const shock = byFacet(ins, "shock_impact").filter((s) => isNum(s.evidence?.impact_score));
+    const blocks = [];
+    const ranking = !plan?.entities?.length && byFacet(ins, "trade_dependence").length > 1;
+    if (ranking) {
+      const rows = byFacet(ins, "trade_dependence").slice(0, 12);
+      blocks.push(views([view("Most dependent economies (share of their trade through one partner)", barList(rows.map((r) => ({
+        label: `${r.evidence.exposed_country} → ${r.evidence.leverage_holder}`, value: r.evidence.exposed_dependence, display: fmt.pct(r.evidence.exposed_dependence, 1),
+      })), { max: 1 }), { wide: true, note: "Each bar: how much of an economy's trade runs through its most important partner." })]));
+      return blocks;
+    }
+    const riskTile = risk && el("div", { class: "tile" }, el("div", { class: "k", text: "Structural trade risk" }), el("div", { class: "v", text: `#${risk.rank}` }),
+      el("div", { class: "s", text: `of ${risk.countries_ranked} economies · rank 1 at the left` }), rankMeter(risk.rank, risk.countries_ranked));
+    const s0 = shock[0]?.evidence;
+    blocks.push(kpiRow([
+      riskTile,
+      risk && tile("Top-3 partner share", fmt.pct(risk.trade_concentration, 1), `${risk.partner_count} partners · HHI ${fmt.num(risk.concentration_index, 3)}`),
+      risk && tile("Imports / exports", `${fmt.usdK(risk.total_imports)} / ${fmt.usdK(risk.total_exports)}`, `${risk.sector} sectors · import share ${fmt.pct(risk.import_dependency_ratio)}`),
+      bloc && tile("Trading bloc", `${bloc.bloc_name}-anchored`, `${bloc.bloc_size} members · ${fmt.pct(bloc.internal_trade_share)} of its trade inside`),
+      lev && tile("Most critical partner", lev.most_critical_partner, `${fmt.pct(lev.critical_partner_dependence, 1)} of its trade`),
+      lev && tile("Net leverage", fmt.signed(lev.net_leverage), `dominates ${lev.partners_dominated} · depends on ${lev.partners_dependent_on}`),
+      s0 && tile("Shock", `${s0.sector} · ${s0.shock_origin}`, `severity ${fmt.pct(s0.severity)} · ${s0.propagation_steps} propagation steps`),
+      pairDep && tile("Who depends on whom", pairDep.exposed_country, `${fmt.pct(pairDep.exposed_dependence, 1)} of its trade vs ${fmt.pct(pairDep.holder_dependence, 1)} for ${pairDep.leverage_holder}`),
+      pairBloc && tile("Same trading bloc?", pairBloc.same_bloc ? "Yes" : "No", (pairBloc.anchors || []).join(" · ") || null),
+    ]));
+    const out = [];
+    if (shock.length) {
+      out.push(view(`Shock propagation: who is hit (${s0.sector})`, barList(shock.slice(0, 10).map((s) => ({ label: s.entity_name, value: s.evidence.impact_score, display: fmt.pct(s.evidence.impact_score, 1) })), { max: 1 }),
+        { wide: true, note: "Impact score after the shock propagates through the trade graph; 100% at the origin." }));
+    }
+    if (outlook?.history_values?.length) {
+      const hist = outlook.history_values.map((p) => ({ x: p.year, y: p.value * 1000 }));
+      const fc = (outlook.forecast_values || []).map((p) => ({ x: p.year, y: p.predicted_value * 1000 }));
+      // With a forecast, only its end is labelled; the two labels would collide.
+      const series = [{ name: fc.length ? null : "actual", points: hist }];
+      if (fc.length) series.push({ name: "forecast", dashed: true, points: [hist[hist.length - 1], ...fc] });
+      const money = (v) => (Math.abs(v) >= 1e12 ? `$${(v / 1e12).toFixed(1)}T` : `$${(v / 1e9).toFixed(0)}B`);
+      out.push(view(`${cap(outlook.metric)} forecast, ${outlook.horizon} (${outlook.method})`, lineChart({ series, yFmt: money, label: "Trade forecast" }), { wide: true, note: `Trend ${outlook.trend}. Model fit scores: ${Object.entries(outlook.forecast_model_scores || {}).map(([k, v]) => `${k} ${fmt.num(v, 3)}`).join(", ")}.` }));
+    }
+    if (pairDep) {
+      out.push(view("Bilateral dependence", barList([
+        { label: `${pairDep.exposed_country} on ${pairDep.leverage_holder}`, value: pairDep.exposed_dependence, display: fmt.pct(pairDep.exposed_dependence, 1) },
+        { label: `${pairDep.leverage_holder} on ${pairDep.exposed_country}`, value: pairDep.holder_dependence, display: fmt.pct(pairDep.holder_dependence, 1) },
+      ], { max: Math.max(pairDep.exposed_dependence, 0.01) }), { note: `${fmt.usdK(pairDep.bilateral_trade)} of trade between them · ${fmt.num(pairDep.exposure_ratio)}x imbalance` }));
+    }
+    if (lev) {
+      out.push(view("Depends most on (share of its trade)", barList((lev.vulnerable_to || []).map((r) => ({ label: r.leverage_holder, value: r.exposed_dependence, display: fmt.pct(r.exposed_dependence, 1) })))));
+      out.push(view("Holds leverage over (their dependence)", barList((lev.holds_leverage_over || []).map((r) => ({ label: r.exposed_country, value: r.exposed_dependence, display: fmt.pct(r.exposed_dependence, 1) })))));
+    }
+    const fragile = byFacet(ins, "supply_fragility");
+    if (fragile.length) {
+      out.push(view("Sector supply fragility (0-1)", barList(fragile.map((f) => ({ label: f.evidence.sector, value: f.evidence.fragility_score, display: f.evidence.fragility_score.toFixed(2), title: `${f.evidence.sector}: ${f.evidence.fragility_score.toFixed(2)}; top supplier ${f.evidence.top_supplier || "?"} ${fmt.pct(f.evidence.top_supplier_share) || ""}` })), { max: 1 }),
+        { note: `Combines supplier concentration and how much the economy relies on the sector. Top suppliers: ${fragile.map((f) => `${f.evidence.sector} ${f.evidence.top_supplier || "?"} ${fmt.pct(f.evidence.top_supplier_share) || ""}`).join(" · ")}.` }));
+    }
+    if (risk?.top_partners?.length) out.push(view("Key partners", chips(risk.top_partners)));
+    if (bloc?.bloc_members?.length) out.push(view(`${bloc.bloc_name}-anchored trading bloc`, chips(bloc.bloc_members.slice(0, 24), [bloc.bloc_name]), { note: `${bloc.bloc_size} members · ${fmt.pct(bloc.world_trade_share)} of world trade` }));
+    blocks.push(views(out));
+    return blocks;
+  },
+};
+const policyProfile = OUTPUTS_MORE.policyProfile;
+const tradeOutputs = OUTPUTS_MORE.tradeOutputs;
+
+function agentOutputs(name, insights, plan) {
+  try {
+    return (OUTPUTS[name] ? OUTPUTS[name](insights, plan) : []).filter(Boolean);
+  } catch (err) {
+    // An unexpected response shape costs this stage its charts, not the run.
+    console.warn(`outputs for ${name} failed`, err);
+    return [];
   }
+}
+
+// ============================================================================
+// Operations: each logged call, said in words.
+// ============================================================================
+const joinList = (v) => (Array.isArray(v) ? v.join(", ") : v);
+function opLabel(agent, call) {
+  const r = call.request || {}, p = call.path || "";
+  const tail = decodeURIComponent(p.split("/").pop() || "");
+  if (agent === "soft_power") {
+    if (p === "/api/latest") return "Load the latest index for all 195 states";
+    if (p === "/api/timeseries") return `Pull the score trajectory for ${joinList(r.iso3) || "the targets"}${r.yStart ? `, ${r.yStart}-${r.yEnd}` : ""}`;
+    if (p.startsWith("/api/drivers/")) return `Attribute ${tail}'s score to its drivers (SHAP)`;
+    if (p.startsWith("/api/forecast/")) return `Forecast ${tail} forward with the Kalman filter`;
+    if (p.startsWith("/api/peers/")) return `Find the profiles closest to ${tail}`;
+    if (p === "/api/deltas") return "Measure rises and falls between years";
+  }
+  if (agent === "policy_stance") {
+    if (p === "/status") return "Check the voting and conflict graph is loaded";
+    if (p === "/countries") return "List the countries in the graph";
+    if (p.startsWith("/blocs-by-year/")) return `Place every country in a UN voting bloc for ${tail}`;
+    if (p === "/alliance-blocs") return "Load the alliance blocs";
+    if (p.startsWith("/bloc-discovery/")) return `Discover blocs from votes alone (Louvain communities), ${tail}`;
+    if (p.startsWith("/country/")) return `Profile ${tail}: conflicts, partners, UN votes`;
+    if (p === "/compare-insight") return `Compare ${r.country_a || "?"} and ${r.country_b || "?"} across their 1989-2025 votes`;
+    if (p === "/forecast") return `Project ${r.countries || "the"} ${r.metric || "conflict"} trend ${r.horizon ? `${r.horizon} years ahead` : ""}`.trim();
+    if (p === "/temporal-agreement") return "Track UN agreement between the pair over time";
+    if (p.startsWith("/graph-delta/")) return `Measure how the graph changed in ${tail}`;
+    if (p === "/topic-agreement") return `Compare every country's UN General Assembly votes with ${r.country || "the target"}'s${r.topic ? ` on resolutions about ${String(r.topic).split("|").join(" / ")}` : " on every resolution"}${r.start_year ? `, ${r.start_year}-${r.end_year}` : ""}`;
+  }
+  if (agent === "trade_intelligence" && p === "/query") {
+    const who = r.country ? ` for ${r.country}` : "", sector = r.sector && r.sector !== "all" ? `, ${r.sector}` : "";
+    const what = {
+      risk: "Rank structural trade risk (centrality, concentration)", blocs: "Detect trading blocs in the trade graph", leverage: "Map leverage and dependence between partners",
+      fragility: "Score sector supply fragility", shock: `Propagate a ${fmt.pct(r.severity) || ""} export shock through the graph`.replace("  ", " "), forecast: `Forecast ${r.metric || "trade"} ${r.periods ? `${r.periods} years ahead` : ""}`.trim(),
+    }[r.query_type] || `Query the trade graph (${r.query_type || "query"})`;
+    return `${what}${who}${sector}`;
+  }
+  if (agent === "event_summarization") {
+    if (p === "/analyze") return `Process the GDELT day ${fmt.day(String(r.date || "")) || r.date || ""} for ${r.country_code || "the target"}: filter, entities, sentiment, clustering`;
+    if (p === "/historical-context") return `Fetch the 1990-2024 GGE baseline, ${r.cc1 || "?"}-${r.cc2 || "?"}`;
+    if (p === "/article-relevance") return `Open the source article and check it names ${r.term1 || "both actors"}${r.term2 ? ` and ${r.term2}` : ""}`;
+    if (p === "/dates") return "List the GDELT days on hand";
+    if (p === "/history/extremes") return `Search ${r.country_code || "the target"}'s day-by-day GDELT history, ${fmt.day(String(r.start || ""))} to ${fmt.day(String(r.end || ""))}: rank every day by mean Goldstein, ${r.direction === "cooperation" ? "most cooperative" : "most conflictual"} first`;
+    if (p === "/history/status") return "Check how much of the GDELT history is indexed";
+  }
+  return `${call.method} ${p}`;
+}
+function opRow(agent, call) {
+  const failed = call.error && !call.handled, recovered = call.error && call.handled;
+  return el("li", { class: `op${failed ? " err" : recovered ? " rec" : ""}` },
+    el("span", { class: "tick", text: failed ? "✕" : recovered ? "↺" : "✓" }),
+    el("span", {}, el("span", { class: "what", text: opLabel(agent, call) }), el("code", { text: `${call.method} ${call.path}` })),
+    el("span", { class: "ms", text: isNum(call.ms) ? `${Math.round(call.ms)} ms` : "" }),
+    call.error ? el("span", { class: "why", text: `${recovered ? "recovered: " : ""}${call.error}` }) : null);
+}
+
+// ============================================================================
+// Findings: the agent's claims, strongest first.
+// ============================================================================
+function claimItem(item) {
+  const row = el("li", {}, plain(item.claim));
+  const link = sourceLink(item.evidence?.url);
+  if (link) row.append(" ", link);
+  const pct = Math.round((Number(item.confidence) || 0) * 100);
+  row.append(el("small", {}, el("span", { class: "confbar" }, el("i", { style: `width:${pct}%` })), `conf ${Number(item.confidence).toFixed(2)} · ${item.facet || ""} · ${item.reason || ""}`));
+  if (item.caveat) row.append(el("div", { class: "caveat", text: `Caveat: ${item.caveat}` }));
+  return row;
+}
+function claimList(insights, keep = 4) {
+  const ranked = insights.slice().sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
+  const head = ranked.slice(0, keep), rest = ranked.slice(keep);
+  return el("div", {},
+    el("ol", { class: "claims" }, head.map(claimItem)),
+    rest.length ? el("details", { class: "more" }, el("summary", { text: `${rest.length} more finding${rest.length > 1 ? "s" : ""}` }), el("ol", { class: "claims" }, rest.map(claimItem))) : null);
+}
+
+// ============================================================================
+// Stages
+// ============================================================================
+// The agent whose field a kind of question is mainly about runs first.
+const INTENT_LEAD = { shock: "trade_intelligence", ranking: "trade_intelligence", blocs: "policy_stance", events: "event_summarization", event_history: "event_summarization", vote_alignment: "policy_stance" };
+function playOrder(plan) {
+  // Most relevant first, as the parser ranked them.
+  if (plan.agent_order?.length) return plan.agent_order.filter((a) => plan.agents.includes(a));
+  // Older plans: agents the plan marks as central go first, then the intent's lead agent; the rest in plan order.
+  const lead = [...(plan.focus_agents || []), INTENT_LEAD[plan.intent]].filter((a, i, all) => a && plan.agents.includes(a) && all.indexOf(a) === i);
+  return [...lead, ...plan.agents.filter((a) => !lead.includes(a))];
+}
+const stageNo = (i) => String(i).padStart(2, "0");
+
+function targetText(plan) {
+  const names = (plan.entities || []).map((e) => e.name);
+  if (!names.length) return "the whole field";
+  return plan.intent === "bilateral" ? names.join(" and ") : names.join(", ");
+}
+function timeText(name, plan, align) {
+  if (plan.time?.mode === "range") return `${plan.time.label || "the range"} (${fmt.day(plan.time.start)} to ${fmt.day(plan.time.end)})`;
+  if (name === "event_summarization") return plan.time?.date ? `GDELT day ${fmt.day(plan.time.date) || plan.time.date}` : "the latest GDELT day";
+  if (plan.time?.mode === "year" && plan.time.year) return `year ${plan.time.year}`;
+  return align?.aligned_year ? `data year ${align.aligned_year}` : "the latest data";
+}
+function missionText(name, plan, align) {
+  const reason = plan.agent_reasons?.[name] || "its view of the target";
+  return `${cap(reason)}, for ${targetText(plan)}, ${timeText(name, plan, align)}.`;
+}
+
+// The frame every agent stage shares; parts are filled in later or at once.
+function stageFrame(name, index, plan, align) {
+  const meta = AGENTS[name] || { label: name, field: "", tracks: "" };
+  const state = el("span", { class: "state", text: "queued" });
+  const dash = el("span");
+  const head = el("div", { class: "stage-head" },
+    el("span", { class: "stage-no", text: stageNo(index) }),
+    el("div", {}, el("h4", { text: meta.label }), el("div", { class: "field", text: `${meta.glyph || ""} ${meta.field}` })),
+    el("div", { class: "side" }, state, dash));
+  const ops = el("ol", { class: "oplog" });
+  const out = el("div", { class: "out" });
+  const findings = el("div", { class: "findings" });
+  const opsBox = el("div", {}, el("h6", { class: "sec", text: "Operations" }), ops);
+  const outBox = el("div", { class: "hidden" }, el("h6", { class: "sec", text: "Output" }), out);
+  const findBox = el("div", { class: "hidden" }, el("h6", { class: "sec", text: "Findings" }), findings);
+  const node = el("article", { class: "card agent panel stage", id: `stage-${name}`, style: agentStyle(name) },
+    head, el("p", { class: "tracks", text: meta.tracks }),
+    el("p", { class: "mission" }, el("b", { text: "Task" }), missionText(name, plan, align)),
+    opsBox, outBox, findBox);
+  return { name, node, state, dash, ops, out, outBox, findings, findBox };
+}
+
+function stageState(frame, result) {
+  const ok = result.status === "ok" || result.status === "partial";
+  frame.state.className = `state${ok ? "" : " bad"}`;
+  frame.state.textContent = `${result.status} · ${Math.round(result.latency_ms || 0)} ms · ${result.insight_count ?? 0} findings`;
+  if (result.dashboard_url) frame.dash.replaceChildren(el("a", { href: result.dashboard_url, target: "_blank", rel: "noopener", text: "Open module dashboard ↗" }));
+  return ok;
+}
+
+// The parts revealed after the operations, in order.
+function stageParts(name, result, plan) {
+  const parts = [];
+  if (result.error) parts.push(el("p", { class: "caveat", text: result.error }));
+  for (const note of result.notes || []) parts.push(el("p", { class: "muted", text: note }));
+  const insights = result.envelope?.insights || [];
+  const ok = result.status === "ok" || result.status === "partial";
+  return { pre: parts, blocks: ok && insights.length ? agentOutputs(name, insights, plan) : [], insights: ok ? insights : [] };
+}
+
+function buildTasking(plan, align, question) {
+  const und = Number(plan.understanding ?? 1);
+  const entities = plan.entities || [];
+  const timeLine = plan.time?.mode === "range" ? `${cap(plan.time.label || "range")}: ${fmt.day(plan.time.start)} to ${fmt.day(plan.time.end)}`
+    : plan.time?.mode === "year" ? `Year ${plan.time.year}` : plan.time?.mode === "date" ? `Day ${fmt.day(plan.time.date) || plan.time.date}` : `Latest · annual agents aligned on ${align?.aligned_year ?? "n/a"}`;
+  const rows = [
+    el("div", { class: "stage-head" },
+      el("span", { class: "stage-no", text: "01" }),
+      el("div", {}, el("h4", { text: "Tasking" }), el("div", { class: "field", text: "Reading the input and assigning the agents" })),
+      el("div", { class: "side" }, el("span", { class: "state", text: "done" }))),
+    el("p", { class: "mission" }, el("b", { text: "Input" }), `“${question || plan.question}”`, plan.read_as ? el("span", { class: "muted", text: `  ·  read as “${plan.read_as}”` }) : null),
+    el("div", { class: "grid2" },
+      tile("Intent", INTENT_LABEL[plan.intent] || plan.intent),
+      tile("Targets", entities.length ? entities.map((e) => `${e.name} (${e.iso3})`).join(" · ") : "Whole field", entities.some((e) => e.matched && e.matched !== e.name) ? `from ${entities.map((e) => `“${e.matched}”`).join(", ")}` : null),
+      tile("Time", timeLine),
+      plan.intent === "vote_alignment"
+        ? tile("UN vote topic", plan.topic ? cap(plan.topic) : "All resolutions", plan.topic_terms && plan.topic_terms !== plan.topic ? `matched as: ${plan.topic_terms.split("|").join(", ")}` : "matched in resolution topics and titles")
+        : plan.intent === "event_history"
+        ? tile("Looking for", plan.direction === "cooperation" ? "Most cooperative days" : "Most conflictual days", "ranked by mean Goldstein score")
+        : tile("Sector", plan.sector || "all", plan.intent === "shock" && isNum(plan.severity) ? `shock severity ${fmt.pct(plan.severity)}` : null),
+      el("div", { class: "tile" }, el("div", { class: "k", text: "Understanding" }), el("div", { class: "v", text: und.toFixed(2) }),
+        el("div", { class: "meter" }, el("b", { style: `left:${Math.max(0, Math.min(1, und)) * 100}%` })),
+        el("div", { class: "s", text: und < 0.5 ? "low: this may not be the question meant" : "how sure the engine is it read the input right" }))),
+    el("h6", { class: "sec", text: "Agent assignment, most relevant first" }),
+    el("div", { class: "assign" }, [...playOrder(plan), ...ORDER.filter((n) => !plan.agents.includes(n))].map((name, i) => {
+      const on = plan.agents.includes(name);
+      const lead = on && i === 0 && plan.agent_order?.length;
+      return el("div", { class: on ? "" : "off", style: agentStyle(name) },
+        el("span", { class: "g", text: on ? String(i + 1) : AGENTS[name].glyph }), el("b", { text: AGENTS[name].label }),
+        el("span", {}, on ? cap(plan.agent_reasons?.[name] || "engaged") : "Standing by: not needed for this input",
+          lead && plan.lead_reason ? el("span", { class: "muted", text: ` · leads because ${plan.lead_reason}` }) : null));
+    })),
+  ];
+  const notes = [...(plan.notes || []), ...(align?.warnings || [])];
+  if (notes.length) rows.push(el("ul", { class: "plainlist muted", style: "margin-top:12px" }, notes.map((n) => el("li", { text: n }))));
+  return rows;
+}
+
+function findingCard(finding) {
+  const card = el("article", { class: `card ${finding.kind}` },
+    el("div", { class: "kind", text: KIND_LABEL[finding.kind] || finding.kind }),
+    el("h4", { text: plain(finding.title) }),
+    el("p", { text: plain(finding.claim) }));
+  const pct = Math.round((finding.confidence || 0) * 100);
+  card.append(el("div", { class: "conf" }, el("span", { class: "bar" }, el("i", { style: `width:${pct}%` })), `confidence ${(finding.confidence || 0).toFixed(2)}`,
+    el("div", { class: "badges" }, (finding.agent_labels || []).map((label) => el("span", { class: "badge", text: label })))));
+  if (finding.caveat) card.append(el("div", { class: "caveat", text: `Caveat: ${finding.caveat}` }));
+  if (finding.supporting?.length) {
+    const list = el("ul", {}, finding.supporting.map((s) =>
+      el("li", {}, el("strong", { text: `${s.agent_label}: ` }), plain(s.claim), el("br"), el("span", { text: `conf ${s.confidence} · ${s.reason || ""}` }))));
+    card.append(el("details", { class: "support" }, el("summary", { text: "What each agent said" }), list));
+  }
+  return card;
+}
+
+function buildAssessment(data, index) {
+  const brief = data.briefing, stats = data.fused?.stats || {};
+  const parts = [
+    el("div", { class: "stage-head" },
+      el("span", { class: "stage-no", text: stageNo(index) }),
+      el("div", {}, el("h4", { text: "Assessment" }), el("div", { class: "field", text: "Fusing the agents: agreement, disagreement, combined view" })),
+      el("div", { class: "side" }, el("span", { class: "state", text: `done · ${Math.round(data.latency_ms || 0)} ms end to end` }))),
+    el("h2", { text: plain(brief.headline) }),
+    el("ul", { class: "summary" }, (brief.summary || []).map((line) => el("li", { text: plain(line) }))),
+    el("div", { class: "meta" },
+      el("span", { class: "chip", text: brief.coverage }),
+      el("span", { class: "chip", text: `${stats.insights_after_dedupe ?? "?"} findings (${stats.duplicates_removed ?? 0} duplicates removed)` }),
+      el("span", { class: "chip", text: `${stats.divergences ?? 0} divergences · ${stats.corroborations ?? 0} corroborations` })),
+  ];
+  for (const section of (brief.sections || []).filter((s) => s.kind !== "agent")) {
+    parts.push(el("h3", { class: "sec", text: section.title }), el("div", { class: "cards" }, section.findings.map(findingCard)));
+  }
+  if (brief.caveats?.length) parts.push(el("h3", { class: "sec", text: "Caveats" }), el("div", { class: "card" }, el("ul", { class: "plainlist" }, brief.caveats.map((c) => el("li", { text: c })))));
+  return parts;
 }
 
 function renderPlan(data) {
   const plan = data.plan;
-  const box = $("plan");
-  box.replaceChildren(
-    el("p", {}, el("strong", { text: "Question: " }), plan.question,
+  $("plan").replaceChildren(
+    el("p", {}, el("strong", { text: "Input: " }), plan.question,
       ...(plan.read_as ? [el("strong", { text: "  ·  Read as: " }), plan.read_as] : []),
       el("strong", { text: "  ·  Understanding: " }), Number(plan.understanding ?? 1).toFixed(2)),
     el("p", {}, el("strong", { text: "Intent: " }), plan.intent,
       el("strong", { text: "  ·  Countries: " }), plan.entities.length ? plan.entities.map((e) => `${e.name} (${e.iso3}, from "${e.matched}")`).join(", ") : "none",
-      el("strong", { text: "  ·  Time: " }), plan.time.mode === "year" ? plan.time.year : plan.time.mode === "date" ? plan.time.date : `latest (aligned ${data.time_alignment.aligned_year ?? "n/a"})`,
       el("strong", { text: "  ·  Sector: " }), plan.sector),
     el("ul", {}, plan.agents.map((agent) => el("li", {}, el("strong", { text: `${LABELS[agent]}: ` }), plan.agent_reasons[agent]))),
-    ...(plan.notes || []).map((note) => el("p", { class: "muted", text: note })),
-    ...(data.time_alignment.warnings || []).map((note) => el("p", { class: "muted", text: note })),
-  );
+    el("table", { class: "calls" }, Object.entries(data.agents || {}).flatMap(([name, result]) => (result.calls || []).map((c) =>
+      el("tr", {}, el("td", { text: LABELS[name] || name }), el("td", { text: c.method }), el("td", { text: c.path }), el("td", { text: c.request ? JSON.stringify(c.request) : "" }), el("td", { text: c.status ?? "—" }), el("td", { text: `${c.ms} ms` }))))));
 }
 
-function render(data) {
-  const brief = data.briefing;
-  $("headline").textContent = plain(brief.headline);
-  const und = brief.understanding || {};
-  const understood = [];
-  if (und.read_as) understood.push(`Read as: "${und.read_as}"`);
-  if (und.read_as || und.low) understood.push(`understanding ${Number(und.confidence).toFixed(2)}`);
-  if (und.low) understood.push("this may not be the question that was asked; see how it was read below");
-  $("understood").textContent = understood.join(" · ");
-  $("summary").replaceChildren(...brief.summary.map((line) => el("li", { text: plain(line) })));
-  const stats = data.fused.stats;
-  $("meta").replaceChildren(
-    el("span", { class: "chip", text: brief.coverage }),
-    el("span", { class: "chip", text: `${stats.insights_after_dedupe} insights (${stats.duplicates_removed} duplicates removed)` }),
-    el("span", { class: "chip", text: `${stats.divergences} divergences · ${stats.corroborations} corroborations` }),
-    el("span", { class: "chip", text: `${Math.round(data.latency_ms)} ms end to end` }),
-  );
+// ============================================================================
+// Run sequence rail
+// ============================================================================
+function railItem(key, index, label, agent) {
+  const li = el("li", { id: `rail-${key}`, class: "s-queued", style: agentStyle(agent) },
+    el("span", { class: "num", text: stageNo(index) }), el("span", { class: "nm", text: label }), el("span", { class: "rs", text: "queued" }));
+  li.addEventListener("click", () => { const target = key === "tasking" ? $("tasking") : key === "assessment" ? $("assessment") : $(`stage-${key}`); if (target?.scrollIntoView) target.scrollIntoView({ block: "start" }); });
+  return li;
+}
+function buildRail(order) {
+  $("rail").replaceChildren(railItem("tasking", 1, "Tasking"), ...order.map((name, i) => railItem(name, i + 2, LABELS[name], name)), railItem("assessment", order.length + 2, "Assessment"));
+}
+function setRail(key, state, text) {
+  const li = $(`rail-${key}`);
+  if (!li) return;
+  li.className = `s-${state}`;
+  const rs = li.children ? li.children[2] : null;
+  if (rs) rs.textContent = text || state;
+}
 
-  const holder = $("findingSections");
-  holder.replaceChildren();
-  for (const section of brief.sections.filter((s) => s.kind !== "agent")) {
-    holder.append(el("h3", { class: "sec", text: section.title }), el("div", { class: "cards" }, section.findings.map(findingCard)));
-  }
-  if (brief.caveats?.length) {
-    holder.append(el("h3", { class: "sec", text: "Caveats" }), el("div", { class: "card" }, el("ul", {}, brief.caveats.map((c) => el("li", { text: c })))));
-  }
-  renderAgents(data.agents, data.plan.agents, data.plan);
+// ============================================================================
+// Instant render: the whole run at once (also what the tests drive).
+// ============================================================================
+function render(data) {
+  const plan = data.plan, order = playOrder(plan);
+  $("fleet").classList.add("hidden");
+  $("runbar").classList.remove("hidden");
+  buildRail(order);
+  $("tasking").replaceChildren(...buildTasking(plan, data.time_alignment, data.question));
+  setRail("tasking", "done", "done");
+  const box = $("agents");
+  box.replaceChildren();
+  order.forEach((name, i) => {
+    const result = data.agents?.[name];
+    if (!result) return;
+    const frame = stageFrame(name, i + 2, plan, data.time_alignment);
+    const ok = stageState(frame, result);
+    frame.ops.replaceChildren(...(result.calls || []).map((c) => opRow(name, c)));
+    if (!(result.calls || []).length) frame.ops.append(el("li", { class: "op" }, el("span", { class: "tick", text: "·" }), el("span", { class: "what", text: "No calls were needed: answered from cache" }), el("span")));
+    const parts = stageParts(name, result, plan);
+    frame.out.replaceChildren(...parts.pre, ...parts.blocks);
+    if (parts.pre.length || parts.blocks.length) frame.outBox.classList.remove("hidden");
+    if (parts.insights.length) { frame.findings.replaceChildren(claimList(parts.insights)); frame.findBox.classList.remove("hidden"); }
+    box.append(frame.node);
+    setRail(name, ok ? "done" : "bad", ok ? `${result.insight_count} findings` : result.status);
+  });
+  $("assessment").replaceChildren(...buildAssessment(data, order.length + 2));
+  $("assessment").classList.remove("hidden");
+  setRail("assessment", "done", "done");
   renderPlan(data);
   $("raw").textContent = JSON.stringify(data, null, 2);
   $("result").classList.remove("hidden");
 }
 
-async function ask(question) {
+// ============================================================================
+// Live run: stream the agents' results and play the stages one by one.
+// ============================================================================
+const RUN = { id: 0, fast: false };
+const sleep = (ms) => new Promise((resolve) => (RUN.fast || !ms ? resolve() : setTimeout(resolve, ms)));
+function deferred() {
+  const d = {};
+  d.promise = new Promise((resolve, reject) => { d.resolve = resolve; d.reject = reject; });
+  d.promise.catch(() => {});
+  return d;
+}
+
+function makeStore() {
+  const store = { plan: deferred(), fusion: deferred(), agents: {}, error: null };
+  store.agent = (name) => {
+    if (!store.agents[name]) {
+      store.agents[name] = deferred();
+      // A stage that starts after the stream failed must not wait forever.
+      if (store.error) store.agents[name].reject(store.error);
+    }
+    return store.agents[name];
+  };
+  store.fail = (error) => {
+    store.error = error;
+    store.plan.reject(error); store.fusion.reject(error);
+    for (const d of Object.values(store.agents)) d.reject(error);
+  };
+  return store;
+}
+
+async function readStream(body, store) {
+  try {
+    const response = await fetch("/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (response.status === 404) return await readWhole(body, store);
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || response.statusText));
+    }
+    if (!response.body?.getReader) return await readWhole(body, store);
+    const reader = response.body.getReader(), decoder = new TextDecoder();
+    let buffer = "", finished = false;
+    const handle = (line) => {
+      if (!line.trim()) return;
+      const event = JSON.parse(line);
+      if (event.type === "plan") store.plan.resolve(event);
+      else if (event.type === "agent") store.agent(event.agent).resolve(event.result);
+      else if (event.type === "fusion") { finished = true; store.fusion.resolve(event); }
+      else if (event.type === "error") throw new Error(event.detail);
+    };
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let cut;
+      while ((cut = buffer.indexOf("\n")) >= 0) { handle(buffer.slice(0, cut)); buffer = buffer.slice(cut + 1); }
+    }
+    handle(buffer);
+    if (!finished) throw new Error("The run ended before the assessment.");
+  } catch (error) {
+    store.fail(error);
+  }
+}
+
+// Fallback for a server without /run: one request, then the same playback.
+async function readWhole(body, store) {
+  const response = await fetch("/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const data = await response.json();
+  if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail));
+  store.plan.resolve({ type: "plan", question: data.question, plan: data.plan, time_alignment: data.time_alignment });
+  for (const [name, result] of Object.entries(data.agents)) store.agent(name).resolve(result);
+  store.fusion.resolve({ type: "fusion", ...data });
+}
+
+function setStatus(text, err = false) { const s = $("status"); s.className = `status${err ? " err" : ""}`; s.textContent = text; }
+function follow(node) { if (!RUN.fast && node?.scrollIntoView) node.scrollIntoView({ behavior: "smooth", block: "start" }); }
+
+async function play(runId, store, question) {
+  const live = () => runId === RUN.id;
+  const started = performance.now();
+  const clock = setInterval(() => { if (live() && !RUN.done) setStatus(`Run in progress · ${((performance.now() - started) / 1000).toFixed(1)} s`); }, 200);
+  try {
+    const first = await store.plan.promise;
+    if (!live()) return;
+    const plan = first.plan, align = first.time_alignment, order = playOrder(plan);
+    buildRail(order);
+    setRail("tasking", "running", "reading input");
+    const tasking = $("tasking");
+    tasking.replaceChildren();
+    for (const part of buildTasking(plan, align, question)) { part.classList?.add("reveal"); tasking.append(part); await sleep(170); if (!live()) return; }
+    setRail("tasking", "done", "done");
+    await sleep(500);
+
+    const results = {};
+    for (const [i, name] of order.entries()) {
+      if (!live()) return;
+      const frame = stageFrame(name, i + 2, plan, align);
+      frame.node.classList.add("reveal");
+      $("agents").append(frame.node);
+      setRail(name, "running", "running");
+      frame.state.className = "state running";
+      frame.state.textContent = "running";
+      follow(frame.node);
+      const waitStarted = performance.now();
+      const slow = name === "event_summarization" ? " The first run on a new GDELT day downloads and processes the whole file, which can take up to a minute." : "";
+      const waitLine = el("li", { class: "waiting" }, el("span", { class: "spinner" }), el("span", { text: `Querying the ${LABELS[name]} service…` }), el("small", { text: "" }));
+      frame.ops.append(waitLine);
+      const tick = setInterval(() => { waitLine.children[2].textContent = `${((performance.now() - waitStarted) / 1000).toFixed(1)} s.${slow}`; }, 150);
+      let result;
+      try { result = await store.agent(name).promise; } finally { clearInterval(tick); }
+      if (!live()) return;
+      results[name] = result;
+      frame.ops.replaceChildren();
+      const calls = result.calls || [];
+      if (!calls.length) frame.ops.append(el("li", { class: "op" }, el("span", { class: "tick", text: "·" }), el("span", { class: "what", text: "No calls were needed: answered from cache" }), el("span")));
+      for (const call of calls) { const row = opRow(name, call); row.classList.add("reveal"); frame.ops.append(row); await sleep(Math.min(420, 160 + (call.ms || 0) / 6)); if (!live()) return; }
+      const ok = stageState(frame, result);
+      const parts = stageParts(name, result, plan);
+      if (parts.pre.length || parts.blocks.length) frame.outBox.classList.remove("hidden");
+      for (const node of [...parts.pre, ...parts.blocks]) { node.classList.add("reveal"); frame.out.append(node); await sleep(520); if (!live()) return; }
+      if (parts.insights.length) { const list = claimList(parts.insights); list.classList.add("reveal"); frame.findings.append(list); frame.findBox.classList.remove("hidden"); }
+      setRail(name, ok ? "done" : "bad", ok ? `${result.insight_count} findings` : result.status);
+      await sleep(1100);
+    }
+
+    if (!live()) return;
+    setRail("assessment", "running", "fusing");
+    const assessment = $("assessment");
+    assessment.replaceChildren();
+    assessment.classList.remove("hidden");
+    follow(assessment);
+    const fused = await store.fusion.promise;
+    if (!live()) return;
+    const data = { question, plan, agents: results, ...fused };
+    for (const part of buildAssessment(data, order.length + 2)) { part.classList?.add("reveal"); assessment.append(part); await sleep(220); if (!live()) return; }
+    setRail("assessment", "done", "done");
+    renderPlan(data);
+    $("raw").textContent = JSON.stringify(data, null, 2);
+    RUN.done = true;
+    setStatus(`Run complete · ${order.length} agent${order.length > 1 ? "s" : ""} · ${((performance.now() - started) / 1000).toFixed(1)} s`);
+  } catch (error) {
+    if (!live()) return;
+    RUN.done = true;
+    setStatus(`Run failed: ${error.message}`, true);
+  } finally {
+    clearInterval(clock);
+    if (live()) { $("askBtn").disabled = false; $("skipBtn").classList.add("hidden"); }
+  }
+}
+
+function requestBody(question) {
   const agents = [...document.querySelectorAll("input[name=agent]:checked")].map((box) => box.value);
   const body = { question };
   if (agents.length && agents.length < 4) body.agents = agents;
   if ($("year").value) body.year = Number($("year").value);
   if ($("sector").value) body.sector = $("sector").value;
+  return body;
+}
 
+async function ask(question) {
+  const runId = ++RUN.id;
+  RUN.fast = Boolean($("instant").checked);
+  RUN.done = false;
   $("askBtn").disabled = true;
-  const status = $("status");
-  status.className = "status";
-  status.textContent = "Fanning out to the agents… (Events may take up to a minute the first time it sees a date)";
-  const started = performance.now();
-  try {
-    const response = await fetch("/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail));
-    render(data);
-    status.textContent = `Answered in ${((performance.now() - started) / 1000).toFixed(1)} s.`;
-  } catch (error) {
-    status.className = "status err";
-    status.textContent = `Request failed: ${error.message}`;
-  } finally {
-    $("askBtn").disabled = false;
-  }
+  $("fleet").classList.add("hidden");
+  $("runbar").classList.remove("hidden");
+  $("skipBtn").classList.toggle("hidden", RUN.fast);
+  $("result").classList.remove("hidden");
+  $("tasking").replaceChildren(el("div", { class: "waiting" }, el("span", { class: "spinner" }), el("span", { text: "Reading the input and assigning agents…" })));
+  $("agents").replaceChildren();
+  $("assessment").classList.add("hidden");
+  $("rail").replaceChildren();
+  setStatus("Starting run…");
+  const store = makeStore();
+  readStream(requestBody(question), store);
+  await play(runId, store, question);
+}
+
+// ============================================================================
+// Idle screen: the fleet with live status.
+// ============================================================================
+function renderFleet(health = {}) {
+  $("fleetCards").replaceChildren(...ORDER.map((name) => {
+    const meta = AGENTS[name], info = health[name] || {};
+    const cls = info.status === "ok" ? "ok" : info.status === "not_ready" ? "warn" : info.status ? "bad" : "";
+    return el("div", { class: "unit", style: agentStyle(name) },
+      el("span", { class: "live" }, el("span", { class: `dot ${cls}` }), info.status || "…"),
+      el("div", { class: "glyph", text: meta.glyph }),
+      el("h3", { text: meta.label }), el("div", { class: "field", text: meta.field }),
+      el("p", { text: meta.tracks }),
+      info.dashboard_url ? el("p", {}, el("a", { href: info.dashboard_url, target: "_blank", rel: "noopener", text: "Open module dashboard ↗" })) : null);
+  }));
 }
 
 async function refreshAgents() {
@@ -625,17 +1473,18 @@ async function refreshAgents() {
     const data = await (await fetch("/agents")).json();
     pills.replaceChildren(...Object.entries(data).map(([name, info]) => {
       const cls = info.status === "ok" ? "ok" : info.status === "not_ready" ? "warn" : "bad";
-      const pill = el(info.dashboard_url ? "a" : "span", { class: "pill", title: `${info.base_url || ""} · ${info.status}` }, el("span", { class: `dot ${cls}` }), LABELS[name] || name);
+      const pill = el(info.dashboard_url ? "a" : "span", { class: "pill", title: `${AGENTS[name]?.field || ""} · ${info.status}` }, el("span", { class: `dot ${cls}` }), LABELS[name] || name);
       if (info.dashboard_url) { pill.href = info.dashboard_url; pill.target = "_blank"; pill.rel = "noopener"; }
       return pill;
     }));
+    renderFleet(data);
   } catch {
-    pills.replaceChildren(el("span", { class: "pill" }, el("span", { class: "dot bad" }), "orchestrator unreachable"));
+    pills.replaceChildren(el("span", { class: "pill" }, el("span", { class: "dot bad" }), "engine unreachable"));
   }
 }
 
-$("examples").replaceChildren(...EXAMPLES.map((text) => {
-  const button = el("button", { type: "button", text });
+$("examples").replaceChildren(el("span", { class: "lbl", text: "Missions" }), ...EXAMPLES.map(([label, text]) => {
+  const button = el("button", { type: "button", text: label, title: text });
   button.addEventListener("click", () => { $("question").value = text; ask(text); });
   return button;
 }));
@@ -644,6 +1493,8 @@ $("askForm").addEventListener("submit", (event) => {
   const question = $("question").value.trim();
   if (question.length >= 2) ask(question);
 });
+$("skipBtn").addEventListener("click", () => { RUN.fast = true; $("skipBtn").classList.add("hidden"); });
+renderFleet();
 refreshAgents();
 setInterval(refreshAgents, 30000);
 </script>

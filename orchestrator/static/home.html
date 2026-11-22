@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GEOINT · Team 128</title>
+<style>
+  :root { --bg: #060a12; --ink: #eef2f8; --muted: #93a0b5; --line: #1d2738;
+    --sp: #a78bfa; --ps: #f5b942; --tr: #34d399; --ev: #f472b6; --accent: #5cc8ff; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); overflow-x: hidden; }
+  body::before { content: ""; position: fixed; inset: -20%; z-index: -2;
+    background: radial-gradient(40% 35% at 20% 25%, rgba(167,139,250,.22), transparent 70%),
+                radial-gradient(35% 35% at 80% 20%, rgba(92,200,255,.20), transparent 70%),
+                radial-gradient(40% 40% at 70% 85%, rgba(52,211,153,.14), transparent 70%),
+                radial-gradient(35% 35% at 15% 85%, rgba(244,114,182,.14), transparent 70%); animation: drift 22s ease-in-out infinite alternate; }
+  body::after { content: ""; position: fixed; inset: 0; z-index: -1; opacity: .25; pointer-events: none;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at 50% 40%, #000 10%, transparent 75%); }
+  @keyframes drift { from { transform: translate3d(-2%, -1%, 0) scale(1); } to { transform: translate3d(2%, 2%, 0) scale(1.06); } }
+  main { min-height: 100%; display: grid; grid-template-rows: auto 1fr auto; max-width: 1240px; margin: 0 auto; padding: 28px 22px; }
+  header { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-weight: 800; color: #071018;
+    background: conic-gradient(from 200deg, var(--sp), var(--ps), var(--tr), var(--ev), var(--sp)); box-shadow: 0 0 24px rgba(167,139,250,.35); }
+  header b { letter-spacing: .16em; font-size: 15px; }
+  header span { color: var(--muted); font-size: 14px; }
+  .hero { align-self: center; padding: 40px 0 24px; }
+  .hero h1 { margin: 0 0 10px; font-size: clamp(30px, 4.6vw, 54px); line-height: 1.08; letter-spacing: -.01em; }
+  .hero h1 em { font-style: normal; background: linear-gradient(90deg, #c4b5fd, #7dd3fc 45%, #6ee7b7); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { margin: 0 0 34px; color: var(--muted); max-width: 760px; font-size: 17px; }
+  .doors { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 22px; }
+  .door { position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 330px; padding: 30px 30px 26px; border-radius: 26px;
+    text-decoration: none; color: var(--ink); overflow: hidden; isolation: isolate; border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,.8); transition: transform .25s ease, box-shadow .25s ease; }
+  .door::before { content: ""; position: absolute; inset: 0; z-index: -2; transition: opacity .3s ease; }
+  .door::after { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(120% 80% at 100% 0%, rgba(255,255,255,.18), transparent 55%), linear-gradient(180deg, transparent 40%, rgba(6,10,18,.55)); }
+  .door:hover, .door:focus-visible { transform: translateY(-6px); box-shadow: 0 40px 80px -30px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.25); outline: none; }
+  .door.features::before { background: linear-gradient(135deg, #5b21b6 0%, #9333ea 38%, #db2777 72%, #f59e0b 100%); }
+  .door.engine::before { background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 30%, #0891b2 60%, #10b981 100%); }
+  .door .kicker { font: 600 12px/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .2em; text-transform: uppercase; opacity: .85; }
+  .door h2 { margin: 14px 0 10px; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.08; }
+  .door p { margin: 0; max-width: 460px; color: rgba(238,242,248,.88); font-size: 16px; }
+  .door .foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 26px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: rgba(6,10,18,.35); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(4px); }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; }
+  .chip .dot.ok { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+  .go { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); transition: transform .25s ease, background .25s ease; flex: none; }
+  .door:hover .go { transform: translateX(4px); background: rgba(255,255,255,.28); }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: 600 13px ui-monospace, Menlo, Consolas, monospace; }
+  .flow span { padding: 6px 10px; border-radius: 8px; background: rgba(6,10,18,.35); border: 1px solid rgba(255,255,255,.18); }
+  .flow i { font-style: normal; opacity: .7; }
+  footer { padding-top: 34px; color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 10px 18px; justify-content: space-between; }
+  @media (prefers-reduced-motion: reduce) { body::before { animation: none; } .door, .go { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header><span class="logo" aria-hidden="true">◉</span><b>GEOINT</b><span>Team 128 · geopolitical intelligence</span></header>
+
+  <section class="hero">
+    <h1>Four agents. <em>One picture of the world.</em></h1>
+    <p>Soft power, diplomacy and conflict, trade, and live news, each tracked by its own specialist agent. Explore each one on its own, or let the engine run them together on your question.</p>
+    <div class="doors">
+      <a class="door features" href="/features">
+        <div>
+          <div class="kicker">Explore</div>
+          <h2>Play with the features</h2>
+          <p>Open each module's own dashboard and drive it yourself: soft-power trajectories, the UN-voting and conflict network, trade shocks, and a day of world events.</p>
+        </div>
+        <div class="foot">
+          <div class="chips" id="chips">
+            <span class="chip"><span class="dot"></span>Soft Power</span><span class="chip"><span class="dot"></span>Policy Stance</span>
+            <span class="chip"><span class="dot"></span>Trade</span><span class="chip"><span class="dot"></span>Events</span>
+          </div>
+          <span class="go" aria-hidden="true">→</span>
+        </div>
+      </a>
+      <a class="door engine" href="/engine">
+        <div>
+          <div class="kicker">Analyse</div>
+          <h2>GEOINT Engine</h2>
+          <p>Point it at a country, a relationship or a scenario. It reads the question, runs the most relevant agent first and the rest after, and fuses what they find into one assessment.</p>
+        </div>
+        <div class="foot">
+          <div class="flow"><span>Tasking</span><i>→</i><span>Agents in turn</span><i>→</i><span>Assessment</span></div>
+          <span class="go" aria-hidden="true">→</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <footer><span>Team 128 · Capstone</span><span id="health">checking the agents…</span></footer>
+</main>
+<script>
+// Live status on the chips: which agents are up right now.
+(async () => {
+  const names = { soft_power: "Soft Power", policy_stance: "Policy Stance", trade_intelligence: "Trade", event_summarization: "Events" };
+  try {
+    const data = await (await fetch("/agents")).json();
+    const chips = document.getElementById("chips");
+    chips.replaceChildren(...Object.entries(names).map(([key, label]) => {
+      const chip = document.createElement("span"); chip.className = "chip";
+      const dot = document.createElement("span"); dot.className = `dot${data[key]?.status === "ok" ? " ok" : ""}`;
+      chip.append(dot, label);
+      return chip;
+    }));
+    const up = Object.values(data).filter((a) => a.status === "ok").length;
+    document.getElementById("health").textContent = `${up} of ${Object.keys(data).length} agents online`;
+  } catch {
+    document.getElementById("health").textContent = "agents unreachable";
+  }
+})();
+</script>
+</body>
+</html>

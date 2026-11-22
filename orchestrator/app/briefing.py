@@ -29,6 +29,8 @@ LOW_UNDERSTANDING = 0.5
 LEAD_FACETS = {
     "events": {"event_summarization": ("event_activity",)},
     "bilateral": {"event_summarization": ("bilateral_events", "event_headline", "bilateral_headlines", "relationship_baseline")},
+    "event_history": {"event_summarization": ("event_extreme_day", "event_extreme_events", "event_history_baseline")},
+    "vote_alignment": {"policy_stance": ("vote_alignment", "vote_pair", "vote_opposition", "topic_stance")},
 }
 
 
@@ -44,6 +46,15 @@ def _cite(finding: dict) -> str:
 def _headline(plan: QueryPlan, findings: list[dict], results: dict[str, AgentResult]) -> str:
     names = [countries.name_of(code) for code in plan.iso3s[:2]]
     lead = next((f for f in findings if f["kind"] in ("divergence", "corroboration")), None)
+    if plan.intent == "vote_alignment" and names:
+        about = f" on {plan.topic}" if plan.topic else ""
+        if len(plan.iso3s) > 1 and not (plan.topic and plan.topic == names[1].lower()):
+            return f"{names[0]} and {names[1]}: how they vote at the UN{about}"
+        return f"{names[0]}: who votes with it at the UN{about}"
+    if plan.intent == "event_history" and names:
+        superlative = "most cooperative" if plan.direction == "cooperation" else "most conflictual"
+        label = plan.time.label or "the range searched"
+        return f"{names[0]}: {superlative} days {'' if label.startswith('since') else 'in '}{label}"
     if plan.intent == "events" and names:
         day = (results.get("event_summarization") and results["event_summarization"].context.get("date")) or ""
         when = f" on {day[:4]}-{day[4:6]}-{day[6:]}" if day else ""
@@ -100,12 +111,31 @@ def compose(plan: QueryPlan, fused: dict, results: dict[str, AgentResult], align
         leads = sorted((f for f in singles if f["agents"][0] == agent and _lead_order(f, facets) < len(facets)), key=lambda f: _lead_order(f, facets))
         if leads:
             best_per_agent[agent] = leads[0]
-    ordered = [a for a in plan.agents if a in plan.focus_agents] + [a for a in plan.agents if a not in plan.focus_agents]
+    # Most relevant agent first (intent.parse ranks them); plans built without a ranking fall back to focus order.
+    ordered = list(plan.agent_order) or ([a for a in plan.agents if a in plan.focus_agents] + [a for a in plan.agents if a not in plan.focus_agents])
     for agent in ordered:
         if len(summary) >= 5:
             break
         if agent in best_per_agent:
             summary.append(f"{best_per_agent[agent]['claim']} {_cite(best_per_agent[agent])}")
+    if plan.intent == "event_history":
+        # The question asks for days: the two top-ranked days and the single most
+        # severe events answer it, then each other agent's strongest claim as
+        # context, in focus order. Findings that tie on rank keep the adapter's
+        # order, so the days stay in rank order.
+        facets = LEAD_FACETS["event_history"]["event_summarization"]
+        picks = sorted((f for f in singles if f["agents"][0] == "event_summarization" and _lead_order(f, facets) < len(facets)), key=lambda f: _lead_order(f, facets))
+        lead = [f for f in picks if "event_extreme_day" in f["facets"]][:2] + [f for f in picks if "event_extreme_events" in f["facets"]][:1]
+        context_order = ordered
+        context = [best_per_agent[a] for a in context_order if a != "event_summarization" and a in best_per_agent]
+        summary = [f"{f['claim']} {_cite(f)}" for f in (lead or picks[:1]) + context][:6]
+    if plan.intent == "vote_alignment":
+        # The ranking answers the question; then each other agent's strongest claim.
+        facets = LEAD_FACETS["vote_alignment"]["policy_stance"]
+        answer = sorted((f for f in singles if f["agents"][0] == "policy_stance" and _lead_order(f, facets) < len(facets)), key=lambda f: _lead_order(f, facets))[:3]
+        context = [best_per_agent[a] for a in ordered if a != "policy_stance" and a in best_per_agent]
+        if answer:
+            summary = [f"{f['claim']} {_cite(f)}" for f in answer + context][:6]
     if not summary:
         summary.append("No agent returned usable insights for this question.")
 

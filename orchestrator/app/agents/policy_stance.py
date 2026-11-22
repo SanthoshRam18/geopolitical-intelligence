@@ -34,7 +34,7 @@ from urllib.parse import quote
 from .. import countries
 from ..contract import insight
 from ..intent import QueryPlan
-from .base import AgentAdapter, AgentNotReady, AgentResult, try_call
+from .base import AgentAdapter, AgentCallError, AgentNotReady, AgentResult, try_call
 
 # Mirrors backend/main.py and backend/ml_analysis.py in the Policy Stance module.
 MANUAL_OVERRIDES = {"India": "Non-Aligned", "Sri Lanka": "China-Centered Bloc"}
@@ -215,7 +215,76 @@ class PolicyStanceAdapter(AgentAdapter):
             if ta_insight:
                 insights.append(ta_insight)
 
+        # "Who votes like X (on a topic)": the answer leads; the profile above follows as context.
+        if plan.intent == "vote_alignment" and targets:
+            insights = await self._vote_alignment(plan, targets[0], gw_names, name_to_iso3, result) + insights
+
         return insights, metadata
+
+    async def _vote_alignment(self, plan: QueryPlan, iso3: str, gw_names: dict, name_to_iso3: dict, result: AgentResult) -> list[dict]:
+        """Every country ranked by how often it voted like ``iso3`` in the UN General
+        Assembly, on the resolutions about the topic asked (/topic-agreement)."""
+        module_name = self._module_name(iso3, gw_names)
+        if not module_name:
+            return []
+        name = countries.name_of(iso3)
+        params: dict = {"country": module_name, "topic": plan.topic_terms or "", "limit": 10}
+        if plan.time.mode == "range" and plan.time.start and plan.time.end:
+            params.update({"start_year": int(plan.time.start[:4]), "end_year": int(plan.time.end[:4])})
+        # A second country is a partner to report, unless it is the topic ("votes with Russia on Ukraine").
+        partner = plan.iso3s[1] if len(plan.iso3s) > 1 else None
+        if partner and plan.topic and plan.topic in {countries.name_of(partner).lower()}:
+            partner = None
+        partner_name = self._module_name(partner, gw_names) if partner else None
+        if partner_name:
+            params["compare"] = partner_name
+        try:
+            payload = await self.get("/topic-agreement", params=params)
+        except AgentCallError as exc:
+            if exc.status_code == 404:
+                self.mark_last_call_handled()
+                result.notes.append(f"Policy Stance has no topic-by-topic UN vote comparison for {name} ({exc}).")
+                return []
+            raise
+        total = int(payload.get("resolutions") or 0)
+        about = f"about {plan.topic}" if plan.topic else "across all topics"
+        if not total:
+            result.notes.append(f"No UN General Assembly resolutions {about} with a recorded vote by {name} in the period asked.")
+            return []
+        years = payload.get("years") or []
+        span = f"{years[0]}-{years[1]}" if len(years) == 2 else ""
+        where = f"UN General Assembly votes {about} ({total:,} resolutions{', ' + span if span else ''})"
+
+        def tag(rows: list[dict]) -> list[dict]:
+            return [{**row, "iso3": name_to_iso3.get(row["country"]) or countries.resolve(row["country"])} for row in rows or []]
+
+        most, least, pairs = tag(payload.get("most_aligned")), tag(payload.get("least_aligned")), tag(payload.get("pairs"))
+        confidence = round(min(0.85, 0.4 + 0.12 * math.log10(1 + total)), 3)
+        reason = f"same vote (yes, no or abstain) on shared resolutions; {payload.get('countries_compared', 0)} countries compared, each on at least {payload.get('min_shared')} shared votes"
+        evidence = {"topic": plan.topic, "terms": payload.get("terms"), "resolutions": total, "years": years,
+                    "own_votes": payload.get("own_votes"), "top_topics": payload.get("top_topics"), "countries_compared": payload.get("countries_compared")}
+        out: list[dict] = []
+        if most:
+            listed = ", ".join(f"{countries.name_of(r['iso3']) if r.get('iso3') else r['country']} ({r['agreement']:.0%})" for r in most[:5])
+            out.append(insight(iso3, f"On {where}, the countries that voted most often like {name} are {listed}.",
+                               most[0]["agreement"], confidence, reason, {**evidence, "ranking": most}, facet="vote_alignment"))
+        for row in pairs:
+            other = countries.name_of(row["iso3"]) if row.get("iso3") else row["country"]
+            out.append(insight(iso3, f"{name} and {other} voted the same way on {row['agreement']:.0%} of the {row['shared']:,} {about} resolutions they both voted on, "
+                                     f"and on opposite sides (one yes, one no) on {row['opposed']:,}.",
+                               row["agreement"], confidence, reason, {**evidence, "pair": [iso3, row.get("iso3")], **row}, facet="vote_pair"))
+        if least:
+            listed = ", ".join(f"{countries.name_of(r['iso3']) if r.get('iso3') else r['country']} ({r['agreement']:.0%})" for r in least[:5])
+            out.append(insight(iso3, f"Least often like {name} on the same votes: {listed}.",
+                               -(1 - least[0]["agreement"]), confidence, reason, {**evidence, "ranking": least}, facet="vote_opposition"))
+        own = payload.get("own_votes") or {}
+        cast = sum(own.values())
+        if cast:
+            topics = "; ".join(t["topic"].split("|")[0].title() for t in (payload.get("top_topics") or [])[:3])
+            out.append(insight(iso3, f"{name} voted Yes on {own.get('yes', 0) / cast:.0%}, No on {own.get('no', 0) / cast:.0%} and abstained on {own.get('abstain', 0) / cast:.0%} "
+                                     f"of these resolutions" + (f"; the most frequent: {topics}." if topics else "."),
+                               (own.get("yes", 0) - own.get("no", 0)) / cast, confidence, "its own recorded votes on the same resolutions", evidence, facet="topic_stance"))
+        return out
 
     async def _blocs(self, plan: QueryPlan, result: AgentResult) -> tuple[dict, str, dict]:
         year = plan.time.year if plan.time.mode == "year" else self.shared.get("aligned_year")

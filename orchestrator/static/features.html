@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Play with the features · GEOINT · Team 128</title>
+<script src="/static/review.js" data-page="features" defer></script>
+<style>
+  :root { --bg: #060a12; --ink: #eef2f8; --muted: #93a0b5; --line: #1d2738; --panel: rgba(15,22,34,.72); }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); min-height: 100vh; }
+  body::before { content: ""; position: fixed; inset: -20%; z-index: -2;
+    background: radial-gradient(35% 35% at 15% 20%, rgba(167,139,250,.20), transparent 70%), radial-gradient(35% 35% at 85% 25%, rgba(245,185,66,.14), transparent 70%),
+                radial-gradient(35% 35% at 20% 85%, rgba(52,211,153,.14), transparent 70%), radial-gradient(35% 35% at 85% 85%, rgba(244,114,182,.16), transparent 70%); }
+  main { max-width: 1240px; margin: 0 auto; padding: 26px 22px 10px; }
+  nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 14px; }
+  nav a:hover { color: var(--ink); }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); }
+  .logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-weight: 800; color: #071018; background: conic-gradient(from 200deg, #a78bfa, #f5b942, #34d399, #f472b6, #a78bfa); }
+  .brand b { letter-spacing: .16em; font-size: 14px; }
+  .links { display: flex; gap: 18px; }
+  h1 { margin: 34px 0 6px; font-size: clamp(28px, 3.6vw, 42px); }
+  .lead { margin: 0 0 28px; color: var(--muted); max-width: 760px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 18px; }
+  .card { position: relative; display: flex; flex-direction: column; min-height: 340px; padding: 24px 24px 20px; border-radius: 22px; text-decoration: none; color: var(--ink);
+    background: var(--panel); border: 1px solid rgba(255,255,255,.08); overflow: hidden; isolation: isolate; transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease; }
+  .card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 150px; z-index: -1; background: var(--grad); opacity: .9;
+    mask-image: linear-gradient(180deg, #000 0%, transparent 100%); }
+  .card:hover, .card:focus-visible { transform: translateY(-6px); border-color: var(--tone); box-shadow: 0 26px 60px -26px var(--tone); outline: none; }
+  .card.off { opacity: .55; pointer-events: none; }
+  .glyph { width: 52px; height: 52px; border-radius: 15px; display: grid; place-items: center; font-size: 26px; background: rgba(6,10,18,.45); border: 1px solid rgba(255,255,255,.22); }
+  .card h2 { margin: 18px 0 2px; font-size: 24px; }
+  .field { color: var(--tone); font-weight: 700; font-size: 14px; }
+  .card ul { margin: 14px 0 0; padding-left: 18px; color: #c7cfdb; font-size: 14px; }
+  .card li { margin: 4px 0; }
+  .foot { margin-top: auto; padding-top: 18px; display: flex; align-items: center; justify-content: space-between; font-size: 14px; }
+  .status { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #64748b; }
+  .dot.ok { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+  .open { font-weight: 700; color: var(--tone); }
+  .card.sp { --tone: #a78bfa; --grad: linear-gradient(135deg, #6d28d9, #a855f7 55%, #c084fc); }
+  .card.ps { --tone: #f5b942; --grad: linear-gradient(135deg, #b45309, #f59e0b 55%, #fcd34d); }
+  .card.tr { --tone: #34d399; --grad: linear-gradient(135deg, #047857, #10b981 55%, #6ee7b7); }
+  .card.ev { --tone: #f472b6; --grad: linear-gradient(135deg, #be185d, #ec4899 55%, #f9a8d4); }
+</style>
+</head>
+<body>
+<main>
+  <nav>
+    <a class="brand" href="/"><span class="logo" aria-hidden="true">◉</span><b>GEOINT</b></a>
+    <span class="links"><a href="/">← Home</a><a href="/engine">GEOINT Engine →</a></span>
+  </nav>
+  <h1>Play with the features</h1>
+  <p class="lead">Each agent comes with its own dashboard. Pick one to explore its data and models directly.</p>
+  <div class="grid" id="cards"></div>
+</main>
+<script>
+const MODULES = [
+  { key: "soft_power", cls: "sp", glyph: "✦", name: "Soft Power", field: "National influence and attraction",
+    can: ["Compare countries' composite scores, 2010-2024", "See who rose and fell, and why (SHAP drivers)", "Kalman forecasts and closest peers"] },
+  { key: "policy_stance", cls: "ps", glyph: "⚖", name: "Policy Stance", field: "Diplomacy, UN voting and conflict",
+    can: ["Explore the 3D conflict and UN-voting network", "Compare countries, heatmaps and alliance blocs", "Topic-by-topic UN stances, 1989-2025"] },
+  { key: "trade_intelligence", cls: "tr", glyph: "⇄", name: "Trade", field: "Economic exposure and supply chains",
+    can: ["Rank structural trade risk", "Simulate a supply shock through the network", "Forecasts and the interactive trade graph"] },
+  { key: "event_summarization", cls: "ev", glyph: "◎", name: "Events", field: "Live news events (GDELT)",
+    can: ["Pick a day and a country", "Watch the GDELT pipeline run: entities, themes, tone", "Top events with their sources and a briefing"] },
+];
+
+function card(module, info) {
+  const url = info?.dashboard_url;
+  const node = document.createElement(url ? "a" : "div");
+  node.className = `card ${module.cls}${url ? "" : " off"}`;
+  if (url) { node.href = url; node.setAttribute("aria-label", `Open the ${module.name} dashboard`); }
+  const ok = info?.status === "ok";
+  node.innerHTML = `
+    <div class="glyph" aria-hidden="true">${module.glyph}</div>
+    <h2>${module.name}</h2>
+    <div class="field">${module.field}</div>
+    <ul>${module.can.map((c) => `<li>${c}</li>`).join("")}</ul>
+    <div class="foot">
+      <span class="status"><span class="dot${ok ? " ok" : ""}"></span>${info ? (ok ? "online" : info.status) : "checking…"}</span>
+      <span class="open">${url ? "Open dashboard →" : "Dashboard not available here"}</span>
+    </div>`;
+  return node;
+}
+
+const cards = document.getElementById("cards");
+cards.replaceChildren(...MODULES.map((m) => card(m, null)));
+fetch("/agents").then((r) => r.json()).then((data) => {
+  cards.replaceChildren(...MODULES.map((m) => card(m, data[m.key])));
+}).catch(() => {});
+</script>
+</body>
+</html>
