@@ -27,6 +27,18 @@ flowchart LR
 | Trade Intelligence | Takshak | CEPII BACI HS92, 1995-2024 | structural risk, trading blocs, leverage, sector fragility, shock propagation, forecasts |
 | Event Summarization | Shreyas | GDELT V1 daily events, GGE 1990-2024 | today's activity, tone and counterparts vs the long-run baseline; validated themes; domestic vs international split; top events checked against their source articles |
 
+## Live demo
+
+**https://65.1.109.59.sslip.io** — deployed on AWS EC2, all four agents running.
+
+| Dashboard | URL |
+|---|---|
+| Main site | https://65.1.109.59.sslip.io |
+| Soft Power | https://softpower.65.1.109.59.sslip.io |
+| Policy Stance | https://policystance.65.1.109.59.sslip.io |
+| Trade Intelligence | https://trade.65.1.109.59.sslip.io |
+| Event Summarization | https://events.65.1.109.59.sslip.io |
+
 ## Quick start (Windows)
 
 ```powershell
