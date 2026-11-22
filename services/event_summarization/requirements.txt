@@ -6,6 +6,7 @@ fastapi>=0.110
 uvicorn[standard]>=0.27
 pydantic>=2.6
 pandas>=2.0,<3
+pyarrow>=14  # parquet files of the day-by-day history index (src/history.py)
 numpy>=1.26
 requests>=2.31
 scikit-learn>=1.4

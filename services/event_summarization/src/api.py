@@ -40,6 +40,7 @@ from src.utils import get_country_display_list, get_country_name
 from src.narration import generate_briefing, MEDIA_DIR
 from src.enricher import enrich_event
 from src.gge import load_gge, build_historical_context, is_available as gge_available
+from src import history
 
 
 # ---------------------------------------------------------------------------
@@ -49,7 +50,9 @@ from src.gge import load_gge, build_historical_context, is_available as gge_avai
 async def lifespan(app: FastAPI):
     warmup_models()
     load_gge()   # pre-processes GGE CSV on first run
+    history.start_background()   # day-by-day GDELT history, filled in the background
     yield
+    history.stop_background()
 
 
 app = FastAPI(title="GDELT Video Intelligence API", lifespan=lifespan)
@@ -299,6 +302,27 @@ def _gemini_model_name():
         return get_cached_model_name()
     except Exception:
         return None
+
+
+@app.get("/history/status")
+def history_status():
+    """How much of the day-by-day GDELT history is indexed so far."""
+    return history.INDEX.status()
+
+
+@app.get("/history/extremes")
+def history_extremes(
+    country_code: str = Query(..., min_length=2, max_length=3),
+    start: str = Query(..., pattern=r"^\d{8}$"),
+    end: str = Query(..., pattern=r"^\d{8}$"),
+    direction: str = Query("conflict", pattern="^(conflict|cooperation)$"),
+    limit: int = Query(5, ge=1, le=20),
+):
+    """The most conflictual (or cooperative) days and events for one country
+    between two dates, from the day-by-day history index."""
+    if start > end:
+        raise HTTPException(status_code=422, detail="start must not be after end")
+    return _jsonable(history.extremes(country_code.upper(), start, end, direction, limit))
 
 
 @app.get("/dates")
