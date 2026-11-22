@@ -3,113 +3,439 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GEOINT · Team 128</title>
+<title>Team 128 · Geopolitical Intelligence</title>
 <style>
-  :root { --bg: #060a12; --ink: #eef2f8; --muted: #93a0b5; --line: #1d2738;
-    --sp: #a78bfa; --ps: #f5b942; --tr: #34d399; --ev: #f472b6; --accent: #5cc8ff; }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body { margin: 0; color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); overflow-x: hidden; }
-  body::before { content: ""; position: fixed; inset: -20%; z-index: -2;
-    background: radial-gradient(40% 35% at 20% 25%, rgba(167,139,250,.22), transparent 70%),
-                radial-gradient(35% 35% at 80% 20%, rgba(92,200,255,.20), transparent 70%),
-                radial-gradient(40% 40% at 70% 85%, rgba(52,211,153,.14), transparent 70%),
-                radial-gradient(35% 35% at 15% 85%, rgba(244,114,182,.14), transparent 70%); animation: drift 22s ease-in-out infinite alternate; }
-  body::after { content: ""; position: fixed; inset: 0; z-index: -1; opacity: .25; pointer-events: none;
-    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 48px 48px;
-    mask-image: radial-gradient(ellipse at 50% 40%, #000 10%, transparent 75%); }
-  @keyframes drift { from { transform: translate3d(-2%, -1%, 0) scale(1); } to { transform: translate3d(2%, 2%, 0) scale(1.06); } }
-  main { min-height: 100%; display: grid; grid-template-rows: auto 1fr auto; max-width: 1240px; margin: 0 auto; padding: 28px 22px; }
-  header { display: flex; align-items: center; gap: 12px; }
-  .logo { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-weight: 800; color: #071018;
-    background: conic-gradient(from 200deg, var(--sp), var(--ps), var(--tr), var(--ev), var(--sp)); box-shadow: 0 0 24px rgba(167,139,250,.35); }
-  header b { letter-spacing: .16em; font-size: 15px; }
-  header span { color: var(--muted); font-size: 14px; }
-  .hero { align-self: center; padding: 40px 0 24px; }
-  .hero h1 { margin: 0 0 10px; font-size: clamp(30px, 4.6vw, 54px); line-height: 1.08; letter-spacing: -.01em; }
-  .hero h1 em { font-style: normal; background: linear-gradient(90deg, #c4b5fd, #7dd3fc 45%, #6ee7b7); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .hero p { margin: 0 0 34px; color: var(--muted); max-width: 760px; font-size: 17px; }
-  .doors { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 22px; }
-  .door { position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 330px; padding: 30px 30px 26px; border-radius: 26px;
-    text-decoration: none; color: var(--ink); overflow: hidden; isolation: isolate; border: 1px solid rgba(255,255,255,.12);
-    box-shadow: 0 30px 60px -30px rgba(0,0,0,.8); transition: transform .25s ease, box-shadow .25s ease; }
-  .door::before { content: ""; position: absolute; inset: 0; z-index: -2; transition: opacity .3s ease; }
-  .door::after { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(120% 80% at 100% 0%, rgba(255,255,255,.18), transparent 55%), linear-gradient(180deg, transparent 40%, rgba(6,10,18,.55)); }
-  .door:hover, .door:focus-visible { transform: translateY(-6px); box-shadow: 0 40px 80px -30px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.25); outline: none; }
-  .door.features::before { background: linear-gradient(135deg, #5b21b6 0%, #9333ea 38%, #db2777 72%, #f59e0b 100%); }
-  .door.engine::before { background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 30%, #0891b2 60%, #10b981 100%); }
-  .door .kicker { font: 600 12px/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .2em; text-transform: uppercase; opacity: .85; }
-  .door h2 { margin: 14px 0 10px; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.08; }
-  .door p { margin: 0; max-width: 460px; color: rgba(238,242,248,.88); font-size: 16px; }
-  .door .foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 26px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: rgba(6,10,18,.35); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(4px); }
-  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; }
-  .chip .dot.ok { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
-  .go { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); transition: transform .25s ease, background .25s ease; flex: none; }
-  .door:hover .go { transform: translateX(4px); background: rgba(255,255,255,.28); }
-  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: 600 13px ui-monospace, Menlo, Consolas, monospace; }
-  .flow span { padding: 6px 10px; border-radius: 8px; background: rgba(6,10,18,.35); border: 1px solid rgba(255,255,255,.18); }
-  .flow i { font-style: normal; opacity: .7; }
-  footer { padding-top: 34px; color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 10px 18px; justify-content: space-between; }
-  @media (prefers-reduced-motion: reduce) { body::before { animation: none; } .door, .go { transition: none; } }
+  :root {
+    --bg: #04080f;
+    --ink: #e8edf5;
+    --muted: #7a8ba3;
+    --accent1: #6366f1;
+    --accent2: #06b6d4;
+    --accent3: #10b981;
+    --accent4: #f43f5e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* ── Globe canvas ── */
+  #globe-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    cursor: grab;
+  }
+  #globe-canvas:active { cursor: grabbing; }
+
+  /* ── Vignette overlay ── */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 70% 70% at 50% 50%, transparent 40%, rgba(4,8,15,.85) 100%),
+      linear-gradient(to bottom, rgba(4,8,15,.5) 0%, transparent 20%, transparent 70%, rgba(4,8,15,.9) 100%);
+  }
+
+  /* ── Layout ── */
+  .ui {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 32px 40px 36px;
+    pointer-events: none;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: auto;
+  }
+  .wordmark {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  #health-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    font-size: 12px;
+    color: var(--muted);
+    backdrop-filter: blur(8px);
+  }
+  .pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 8px #4ade80;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+
+  /* ── Hero text ── */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: clamp(32px, 5vw, 62px);
+    font-weight: 800;
+    line-height: 1.07;
+    letter-spacing: -.02em;
+    background: linear-gradient(135deg, #e0e7ff 0%, #a5f3fc 40%, #6ee7b7 80%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero p {
+    font-size: clamp(14px, 1.6vw, 18px);
+    color: var(--muted);
+    max-width: 480px;
+    line-height: 1.6;
+  }
+
+  /* ── Cards ── */
+  .cards {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    pointer-events: auto;
+  }
+  .card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 26px;
+    border-radius: 20px;
+    text-decoration: none;
+    color: var(--ink);
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    backdrop-filter: blur(16px);
+    transition: transform .22s ease, background .22s ease, box-shadow .22s ease;
+    min-width: 220px;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    background: rgba(255,255,255,.1);
+    box-shadow: 0 20px 50px -15px rgba(0,0,0,.8);
+  }
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: grid; place-items: center;
+    font-size: 20px;
+    flex: none;
+  }
+  .card.explore .card-icon { background: linear-gradient(135deg, #6366f1, #a855f7); }
+  .card.engine .card-icon { background: linear-gradient(135deg, #0ea5e9, #10b981); }
+  .card-text strong { display: block; font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .card-text span { font-size: 12px; color: var(--muted); }
+  .card-arrow { margin-left: auto; font-size: 18px; opacity: .4; transition: opacity .2s, transform .2s; }
+  .card:hover .card-arrow { opacity: .9; transform: translateX(3px); }
+
+  /* ── Hint ── */
+  .hint {
+    position: fixed;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    font-size: 11px;
+    color: rgba(255,255,255,.2);
+    letter-spacing: .1em;
+    pointer-events: none;
+    animation: fadeHint 3s ease 2s forwards;
+    opacity: 0;
+  }
+  @keyframes fadeHint { 0% { opacity:0; } 20% { opacity:1; } 80% { opacity:1; } 100% { opacity:0; } }
+
+  @media (max-width: 600px) {
+    .ui { padding: 24px 20px 28px; }
+    .cards { flex-direction: column; align-items: center; }
+    .card { width: 100%; max-width: 340px; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <header><span class="logo" aria-hidden="true">◉</span><b>GEOINT</b><span>Team 128 · geopolitical intelligence</span></header>
 
-  <section class="hero">
-    <h1>Four agents. <em>One picture of the world.</em></h1>
-    <p>Soft power, diplomacy and conflict, trade, and live news, each tracked by its own specialist agent. Explore each one on its own, or let the engine run them together on your question.</p>
-    <div class="doors">
-      <a class="door features" href="/features">
-        <div>
-          <div class="kicker">Explore</div>
-          <h2>Play with the features</h2>
-          <p>Open each module's own dashboard and drive it yourself: soft-power trajectories, the UN-voting and conflict network, trade shocks, and a day of world events.</p>
-        </div>
-        <div class="foot">
-          <div class="chips" id="chips">
-            <span class="chip"><span class="dot"></span>Soft Power</span><span class="chip"><span class="dot"></span>Policy Stance</span>
-            <span class="chip"><span class="dot"></span>Trade</span><span class="chip"><span class="dot"></span>Events</span>
-          </div>
-          <span class="go" aria-hidden="true">→</span>
-        </div>
-      </a>
-      <a class="door engine" href="/engine">
-        <div>
-          <div class="kicker">Analyse</div>
-          <h2>GEOINT Engine</h2>
-          <p>Point it at a country, a relationship or a scenario. It reads the question, runs the most relevant agent first and the rest after, and fuses what they find into one assessment.</p>
-        </div>
-        <div class="foot">
-          <div class="flow"><span>Tasking</span><i>→</i><span>Agents in turn</span><i>→</i><span>Assessment</span></div>
-          <span class="go" aria-hidden="true">→</span>
-        </div>
-      </a>
-    </div>
-  </section>
+<canvas id="globe-canvas"></canvas>
+<div class="vignette"></div>
 
-  <footer><span>Team 128 · Capstone</span><span id="health">checking the agents…</span></footer>
-</main>
+<div class="ui">
+  <div class="topbar">
+    <span class="wordmark">Team 128</span>
+    <div id="health-pill"><span class="pulse"></span><span id="health-text">checking…</span></div>
+  </div>
+
+  <div class="hero">
+    <h1>Geopolitical<br>Intelligence</h1>
+    <p>Four specialist agents. One fused picture of the world.</p>
+  </div>
+
+  <div class="cards">
+    <a class="card explore" href="/features">
+      <div class="card-icon">🧩</div>
+      <div class="card-text">
+        <strong>Explore Modules</strong>
+        <span>Soft Power · Policy · Trade · Events</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+    <a class="card engine" href="/engine">
+      <div class="card-icon">⚡</div>
+      <div class="card-text">
+        <strong>Ask the Engine</strong>
+        <span>Multi-agent geopolitical analysis</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+  </div>
+</div>
+
+<div class="hint">drag to rotate · scroll to zoom</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// Live status on the chips: which agents are up right now.
+// ── Globe ──────────────────────────────────────────────────────────────
+const canvas = document.getElementById('globe-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 0);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+camera.position.z = 2.6;
+
+// ── Sizes ──
+function resize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ── Globe sphere ──
+const GEO = new THREE.SphereGeometry(1, 64, 64);
+
+// Procedural texture: ocean + lat/lon grid + glowing dots
+function buildGlobeTexture() {
+  const size = 1024;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = size;
+  const ctx = cv.getContext('2d');
+
+  // Ocean base gradient
+  const ocean = ctx.createRadialGradient(size*.4, size*.35, 0, size/2, size/2, size*.7);
+  ocean.addColorStop(0, '#0d2a4a');
+  ocean.addColorStop(.5, '#071829');
+  ocean.addColorStop(1, '#040d1a');
+  ctx.fillStyle = ocean;
+  ctx.fillRect(0, 0, size, size);
+
+  // Lat/lon grid
+  ctx.strokeStyle = 'rgba(99,102,241,0.18)';
+  ctx.lineWidth = 0.8;
+  for (let lat = -80; lat <= 80; lat += 20) {
+    const y = ((lat + 90) / 180) * size;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size, y); ctx.stroke();
+  }
+  for (let lon = 0; lon < 360; lon += 20) {
+    const x = (lon / 360) * size;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size); ctx.stroke();
+  }
+
+  // Glowing city dots
+  const cities = [
+    [28.6,77.2],[51.5,-0.1],[40.7,-74],[35.7,139.7],[31.2,121.5],
+    [-33.9,18.4],[48.9,2.3],[55.8,37.6],[19.1,72.9],[1.3,103.8],
+    [25.2,55.3],[-23.6,-46.6],[41.0,28.9],[37.6,127.0],[52.5,13.4],
+    [33.9,-118.2],[43.7,-79.4],[-37.8,145],[30.0,31.2],[6.5,3.4],
+  ];
+  cities.forEach(([lat, lon]) => {
+    const x = ((lon + 180) / 360) * size;
+    const y = ((90 - lat) / 180) * size;
+    const colors = ['#6366f1','#06b6d4','#10b981','#f43f5e','#a78bfa','#34d399'];
+    const col = colors[Math.floor(Math.random() * colors.length)];
+    const r = 2.5 + Math.random() * 2;
+    const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 3.5);
+    grd.addColorStop(0, col);
+    grd.addColorStop(.4, col + 'aa');
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(x, y, r * 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  return new THREE.CanvasTexture(cv);
+}
+
+const globeMat = new THREE.MeshPhongMaterial({
+  map: buildGlobeTexture(),
+  shininess: 60,
+  specular: new THREE.Color(0x1a3a6a),
+});
+const globe = new THREE.Mesh(GEO, globeMat);
+scene.add(globe);
+
+// Atmosphere glow (additive shell)
+const atmMat = new THREE.MeshPhongMaterial({
+  color: 0x1a4a9f,
+  emissive: 0x0a1f5c,
+  transparent: true,
+  opacity: 0.18,
+  side: THREE.BackSide,
+});
+const atm = new THREE.Mesh(new THREE.SphereGeometry(1.08, 64, 64), atmMat);
+scene.add(atm);
+
+// Outer rim glow
+const rimMat = new THREE.MeshPhongMaterial({
+  color: 0x06b6d4,
+  emissive: 0x06b6d4,
+  transparent: true,
+  opacity: 0.07,
+  side: THREE.BackSide,
+});
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.14, 64, 64), rimMat));
+
+// ── Arc lines between cities ──
+function latLonToVec3(lat, lon, r=1.01) {
+  const phi = (90 - lat) * Math.PI / 180;
+  const theta = (lon + 180) * Math.PI / 180;
+  return new THREE.Vector3(
+    -r * Math.sin(phi) * Math.cos(theta),
+     r * Math.cos(phi),
+     r * Math.sin(phi) * Math.sin(theta)
+  );
+}
+
+function addArc(a, b, color) {
+  const start = latLonToVec3(...a);
+  const end   = latLonToVec3(...b);
+  const mid   = start.clone().add(end).normalize().multiplyScalar(1.25);
+  const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+  const pts = curve.getPoints(60);
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.5 });
+  scene.add(new THREE.Line(geo, mat));
+}
+
+const arcPairs = [
+  [[51.5,-0.1],[40.7,-74],0x6366f1],
+  [[51.5,-0.1],[35.7,139.7],0x06b6d4],
+  [[28.6,77.2],[1.3,103.8],0x10b981],
+  [[31.2,121.5],[35.7,139.7],0xa78bfa],
+  [[40.7,-74],[33.9,-118.2],0xf43f5e],
+  [[28.6,77.2],[30.0,31.2],0x34d399],
+  [[48.9,2.3],[55.8,37.6],0x6366f1],
+  [[-23.6,-46.6],[40.7,-74],0xf43f5e],
+  [[25.2,55.3],[28.6,77.2],0x06b6d4],
+  [[43.7,-79.4],[51.5,-0.1],0xa78bfa],
+];
+arcPairs.forEach(([a,b,c]) => addArc(a,b,c));
+
+// ── Lighting ──
+scene.add(new THREE.AmbientLight(0x1a2a4a, 1.2));
+const sun = new THREE.DirectionalLight(0x7dd3fc, 2.0);
+sun.position.set(5, 3, 5);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0x6366f1, 0.5);
+fill.position.set(-4, -2, -3);
+scene.add(fill);
+
+// ── Mouse drag rotation ──
+let isDragging = false, prevX = 0, prevY = 0;
+let velX = 0, velY = 0;
+let rotX = 0.3, rotY = 0;
+
+canvas.addEventListener('mousedown', e => { isDragging = true; prevX = e.clientX; prevY = e.clientY; velX = velY = 0; });
+window.addEventListener('mouseup', () => { isDragging = false; });
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  velX = (e.clientY - prevY) * 0.005;
+  velY = (e.clientX - prevX) * 0.005;
+  rotX += velX; rotY += velY;
+  prevX = e.clientX; prevY = e.clientY;
+});
+
+// Touch
+canvas.addEventListener('touchstart', e => { isDragging = true; prevX = e.touches[0].clientX; prevY = e.touches[0].clientY; velX = velY = 0; }, { passive: true });
+window.addEventListener('touchend', () => { isDragging = false; });
+window.addEventListener('touchmove', e => {
+  if (!isDragging) return;
+  velX = (e.touches[0].clientY - prevY) * 0.005;
+  velY = (e.touches[0].clientX - prevX) * 0.005;
+  rotX += velX; rotY += velY;
+  prevX = e.touches[0].clientX; prevY = e.touches[0].clientY;
+}, { passive: true });
+
+// Scroll zoom
+let zoom = 2.6;
+window.addEventListener('wheel', e => {
+  zoom = Math.max(1.8, Math.min(4.5, zoom + e.deltaY * 0.003));
+}, { passive: true });
+
+// ── Animate ──
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+
+  if (!isDragging) {
+    rotY += 0.0015;
+    velX *= 0.92; velY *= 0.92;
+    rotX += velX; rotY += velY;
+  }
+
+  rotX = Math.max(-Math.PI/2, Math.min(Math.PI/2, rotX));
+  globe.rotation.x = rotX;
+  globe.rotation.y = rotY;
+  atm.rotation.x = rotX;
+  atm.rotation.y = rotY;
+
+  camera.position.z += (zoom - camera.position.z) * 0.08;
+  renderer.render(scene, camera);
+}
+animate();
+
+// ── Health check ──
 (async () => {
-  const names = { soft_power: "Soft Power", policy_stance: "Policy Stance", trade_intelligence: "Trade", event_summarization: "Events" };
   try {
-    const data = await (await fetch("/agents")).json();
-    const chips = document.getElementById("chips");
-    chips.replaceChildren(...Object.entries(names).map(([key, label]) => {
-      const chip = document.createElement("span"); chip.className = "chip";
-      const dot = document.createElement("span"); dot.className = `dot${data[key]?.status === "ok" ? " ok" : ""}`;
-      chip.append(dot, label);
-      return chip;
-    }));
-    const up = Object.values(data).filter((a) => a.status === "ok").length;
-    document.getElementById("health").textContent = `${up} of ${Object.keys(data).length} agents online`;
+    const data = await (await fetch('/agents')).json();
+    const up = Object.values(data).filter(a => a.status === 'ok').length;
+    const total = Object.keys(data).length;
+    document.getElementById('health-text').textContent = `${up} of ${total} agents online`;
   } catch {
-    document.getElementById("health").textContent = "agents unreachable";
+    document.getElementById('health-text').textContent = 'agents unreachable';
   }
 })();
 </script>
