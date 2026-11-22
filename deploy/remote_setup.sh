@@ -87,6 +87,8 @@ EOF
 ${PREFIX}${name}.${HOST} {
 	encode gzip
 $AUTH_BLOCK
+	header X-Frame-Options ""
+	header Content-Security-Policy ""
 	handle_path /api/* {
 		reverse_proxy ${agent}:8000
 	}

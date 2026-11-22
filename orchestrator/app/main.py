@@ -157,6 +157,17 @@ async def review_public() -> dict:
     return {"min_words": reviews.PUBLIC_MIN_WORDS, "reviews": reviews.public()}
 
 
+@app.get("/reviews/all")
+async def review_all(pin: str = "") -> dict:
+    if pin != "@128":
+        raise HTTPException(status_code=403, detail="Invalid pin.")
+    all_data = reviews.all_reviews()
+    # Strip email from the response — it stays server-side only
+    for r in all_data:
+        r.pop("email", None)
+    return {"reviews": all_data}
+
+
 @app.get("/agents")
 async def agents() -> dict:
     return await _orchestrator().agents_health()
@@ -194,3 +205,7 @@ if STATIC_DIR.exists():
     @app.get("/engine", include_in_schema=False)
     async def engine() -> FileResponse:
         return _page("index.html")
+
+    @app.get("/brochure", include_in_schema=False)
+    async def brochure() -> FileResponse:
+        return _page("brochure.html")

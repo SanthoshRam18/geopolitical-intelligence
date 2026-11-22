@@ -6,437 +6,1104 @@
 <title>Team 128 · Geopolitical Intelligence</title>
 <style>
   :root {
-    --bg: #04080f;
+    --bg: #030609;
     --ink: #e8edf5;
-    --muted: #7a8ba3;
-    --accent1: #6366f1;
-    --accent2: #06b6d4;
-    --accent3: #10b981;
-    --accent4: #f43f5e;
+    --muted: #6b7a94;
+    --border: rgba(255,255,255,.07);
+    --glass: rgba(6,12,24,.8);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; overflow: hidden; }
-  body {
-    background: var(--bg);
-    color: var(--ink);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  #globe-wrap { position: fixed; inset: 0; z-index: 0; }
+  .vig { position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 30%, rgba(3,6,9,.88) 100%),
+                linear-gradient(to bottom, rgba(3,6,9,.6) 0%, transparent 20%, transparent 60%, rgba(3,6,9,.97) 100%); }
+  .ui { position: fixed; inset: 0; z-index: 2; display: flex; flex-direction: column;
+        justify-content: space-between; padding: 26px 32px 30px; pointer-events: none; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; pointer-events: auto; }
+  .wordmark { font-size: 11px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
+  #health-pill { display: flex; align-items: center; gap: 8px; padding: 7px 16px; border-radius: 999px;
+    background: rgba(255,255,255,.04); border: 1px solid var(--border); font-size: 12px; color: var(--muted);
+    backdrop-filter: blur(12px); }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e;
+    box-shadow: 0 0 8px #22c55e; animation: blink 2.2s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+  .hero h1 { font-size: clamp(32px, 5vw, 60px); font-weight: 800; letter-spacing: -.03em; line-height: 1.07;
+    background: linear-gradient(135deg, #c7d2fe 0%, #67e8f9 42%, #6ee7b7 80%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero .sub { font-size: clamp(12px, 1.4vw, 15.5px); color: var(--muted); line-height: 1.65; max-width: 560px; }
+  .hero .sub em { font-style: normal; color: rgba(103,232,249,.85); }
+  .datasources { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 2px; }
+  .dsrc { padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1);
+    font-size: 10px; font-weight: 600; letter-spacing: .05em; color: rgba(255,255,255,.33);
+    background: rgba(255,255,255,.03); }
+  .bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; pointer-events: auto; }
+  .hint-text { font-size: 11px; color: rgba(255,255,255,.18); letter-spacing: .08em; }
+  .actions { display: flex; gap: 10px; }
+  .btn { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-radius: 13px;
+    text-decoration: none; color: var(--ink); border: 1px solid var(--border);
+    backdrop-filter: blur(16px); transition: all .22s ease; cursor: pointer; font-size: 13.5px; font-weight: 600; }
+  .btn-icon { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-size: 14px; flex: none; }
+  .btn-label { display: flex; flex-direction: column; }
+  .btn-label small { font-size: 10px; font-weight: 400; color: var(--muted); margin-top: 1px; }
+  .btn-arr { margin-left: 4px; opacity: .4; font-size: 15px; transition: transform .2s, opacity .2s; }
+  .btn:hover .btn-arr { opacity: .9; transform: translateX(3px); }
+  .btn.explore { background: rgba(99,102,241,.1); border-color: rgba(99,102,241,.28); }
+  .btn.explore:hover { background: rgba(99,102,241,.2); border-color: rgba(99,102,241,.5); box-shadow: 0 0 28px rgba(99,102,241,.18); transform: translateY(-2px); }
+  .btn.explore .btn-icon { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+  .btn.engine { background: rgba(6,182,212,.08); border-color: rgba(6,182,212,.25); }
+  .btn.engine:hover { background: rgba(6,182,212,.18); border-color: rgba(6,182,212,.48); box-shadow: 0 0 28px rgba(6,182,212,.16); transform: translateY(-2px); }
+  .btn.engine .btn-icon { background: linear-gradient(135deg, #0369a1, #0d9488); }
+  .about-pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 16px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04);
+    color: rgba(255,255,255,.45); font-size: 12px; font-weight: 600; letter-spacing: .04em;
+    text-decoration: none; transition: all .18s; backdrop-filter: blur(12px); pointer-events: auto; }
+  .about-pill:hover { color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.08); }
+  .about-pill svg { opacity: .5; transition: opacity .18s; }
+  .about-pill:hover svg { opacity: 1; }
+  #tooltip { position: fixed; z-index: 10; padding: 7px 13px; background: var(--glass);
+    border: 1px solid rgba(99,102,241,.3); border-radius: 9px; font-size: 12.5px; font-weight: 600;
+    backdrop-filter: blur(16px); pointer-events: none; opacity: 0; transform: translateY(4px);
+    transition: opacity .12s, transform .12s; white-space: nowrap; }
+  #tooltip.show { opacity: 1; transform: translateY(0); }
+
+  /* ── SNAPSHOT PANEL ── */
+  .snap-bg { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+    background: rgba(3,6,9,.75); backdrop-filter: blur(8px); opacity: 0; pointer-events: none;
+    transition: opacity .28s ease; }
+  .snap-bg.open { opacity: 1; pointer-events: auto; }
+  .snap { width: min(620px, 95vw); max-height: 88vh; display: flex; flex-direction: column;
+    background: rgba(8,14,26,.95); border: 1px solid rgba(255,255,255,.09);
+    border-radius: 24px; overflow: hidden; box-shadow: 0 50px 120px rgba(0,0,0,.8);
+    transform: scale(.95) translateY(16px); transition: transform .32s cubic-bezier(.34,1.4,.64,1); }
+  .snap-bg.open .snap { transform: scale(1) translateY(0); }
+  .snap-head { padding: 20px 22px 16px; border-bottom: 1px solid rgba(255,255,255,.07); flex: none; }
+  .snap-country { display: flex; align-items: center; gap: 12px; }
+  .snap-flag { font-size: 30px; line-height: 1; }
+  .snap-info h2 { font-size: 20px; font-weight: 700; }
+  .snap-info p { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .snap-close { margin-left: auto; width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--border);
+    background: rgba(255,255,255,.04); cursor: pointer; color: var(--muted); font-size: 16px;
+    display: grid; place-items: center; transition: background .15s; flex: none; }
+  .snap-close:hover { background: rgba(255,255,255,.1); color: var(--ink); }
+  .snap-body { flex: 1; overflow-y: auto; padding: 16px 22px 4px; min-height: 0; }
+  .snap-body::-webkit-scrollbar { width: 4px; }
+  .snap-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+  .findings-label { font-size: 10.5px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .fl-spinner { width: 11px; height: 11px; border-radius: 50%; flex: none;
+    border: 2px solid rgba(103,232,249,.2); border-top-color: rgba(103,232,249,.9);
+    animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #findings-list { display: grid; gap: 7px; }
+  .finding { padding: 11px 13px; border-radius: 11px; border: 1px solid;
+    animation: rise .35s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .finding.divergence { background: rgba(251,146,60,.07); border-color: rgba(251,146,60,.25); }
+  .finding.corroboration { background: rgba(74,222,128,.06); border-color: rgba(74,222,128,.2); }
+  .finding.cross_agent { background: rgba(167,139,250,.08); border-color: rgba(167,139,250,.25); }
+  .finding.insight { background: rgba(255,255,255,.025); border-color: rgba(255,255,255,.07); }
+  .finding-kind { font-size: 9px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; margin-bottom: 4px; }
+  .finding.divergence .finding-kind { color: #fb923c; }
+  .finding.corroboration .finding-kind { color: #4ade80; }
+  .finding.cross_agent .finding-kind { color: #a78bfa; }
+  .finding.insight .finding-kind { color: var(--muted); }
+  .finding-title { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+  .finding-claim { font-size: 12px; color: rgba(232,237,245,.68); line-height: 1.5; }
+  .finding-agents { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+  .fag { font-size: 9.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1);
+    color: rgba(255,255,255,.4); background: rgba(255,255,255,.04); }
+  .snap-status { padding: 10px 13px; border-radius: 9px; background: rgba(255,255,255,.03);
+    border: 1px solid var(--border); font-size: 12px; color: var(--muted);
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .snap-err { color: #f87171; }
+  .snap-foot { padding: 14px 22px 18px; border-top: 1px solid rgba(255,255,255,.07); flex: none; }
+  .foot-label { font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 9px; }
+  .agent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 7px; }
+  .agent-card { display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 11px;
+    text-decoration: none; color: var(--ink); border: 1px solid var(--border);
+    background: rgba(255,255,255,.025); transition: all .16s ease; }
+  .agent-card:hover { transform: translateY(-2px); }
+  .agent-card .ag-icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; font-size: 14px; flex: none; }
+  .agent-card .ag-text strong { display: block; font-size: 12px; font-weight: 700; }
+  .agent-card .ag-text span { font-size: 10px; color: var(--muted); line-height: 1.4; }
+  .agent-card.sp { border-color: rgba(167,139,250,.18); }
+  .agent-card.sp:hover { background: rgba(167,139,250,.1); border-color: rgba(167,139,250,.42); }
+  .agent-card.sp .ag-icon { background: linear-gradient(135deg,#4c1d95,#7c3aed); }
+  .agent-card.ps { border-color: rgba(245,185,66,.18); }
+  .agent-card.ps:hover { background: rgba(245,185,66,.08); border-color: rgba(245,185,66,.42); }
+  .agent-card.ps .ag-icon { background: linear-gradient(135deg,#92400e,#d97706); }
+  .agent-card.tr { border-color: rgba(52,211,153,.18); }
+  .agent-card.tr:hover { background: rgba(52,211,153,.08); border-color: rgba(52,211,153,.42); }
+  .agent-card.tr .ag-icon { background: linear-gradient(135deg,#064e3b,#059669); }
+  .agent-card.ev { border-color: rgba(244,114,182,.18); }
+  .agent-card.ev:hover { background: rgba(244,114,182,.08); border-color: rgba(244,114,182,.42); }
+  .agent-card.ev .ag-icon { background: linear-gradient(135deg,#881337,#e11d48); }
+  .engine-btn { display: flex; align-items: center; gap: 9px; padding: 10px 14px; border-radius: 11px;
+    text-decoration: none; color: var(--ink); border: 1px solid rgba(6,182,212,.2);
+    background: rgba(6,182,212,.04); transition: all .16s ease; width: 100%; }
+  .engine-btn:hover { background: rgba(6,182,212,.13); border-color: rgba(6,182,212,.42); transform: translateY(-2px); }
+  .engine-btn .ag-icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center;
+    font-size: 14px; background: linear-gradient(135deg,#0c4a6e,#0d9488); flex: none; }
+  .engine-btn .ag-text strong { font-size: 12px; font-weight: 700; }
+  .engine-btn .ag-text span { font-size: 10px; color: var(--muted); }
+  .engine-btn .eg-arr { margin-left: auto; opacity:.38; font-size:14px; transition: transform .2s, opacity .2s; }
+  .engine-btn:hover .eg-arr { opacity:.88; transform: translateX(3px); }
+
+  @media (max-width:580px) {
+    .ui { padding: 18px 16px 22px; }
+    .agent-grid { grid-template-columns: 1fr; }
+    .bottom { flex-direction: column-reverse; align-items: center; }
+    .actions { width: 100%; flex-direction: column; }
+    .btn { width: 100%; }
   }
 
-  /* ── Globe canvas ── */
-  #globe-canvas {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    cursor: grab;
-  }
-  #globe-canvas:active { cursor: grabbing; }
-
-  /* ── Vignette overlay ── */
-  .vignette {
-    position: fixed;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background:
-      radial-gradient(ellipse 70% 70% at 50% 50%, transparent 40%, rgba(4,8,15,.85) 100%),
-      linear-gradient(to bottom, rgba(4,8,15,.5) 0%, transparent 20%, transparent 70%, rgba(4,8,15,.9) 100%);
-  }
-
-  /* ── Layout ── */
-  .ui {
-    position: fixed;
-    inset: 0;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 32px 40px 36px;
-    pointer-events: none;
-  }
-
-  /* ── Top bar ── */
-  .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    pointer-events: auto;
-  }
-  .wordmark {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: .18em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  #health-pill {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 6px 14px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.1);
-    font-size: 12px;
-    color: var(--muted);
-    backdrop-filter: blur(8px);
-  }
-  .pulse {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: #4ade80;
-    box-shadow: 0 0 8px #4ade80;
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
-
-  /* ── Hero text ── */
-  .hero {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 14px;
-    pointer-events: none;
-  }
-  .hero h1 {
-    font-size: clamp(32px, 5vw, 62px);
-    font-weight: 800;
-    line-height: 1.07;
-    letter-spacing: -.02em;
-    background: linear-gradient(135deg, #e0e7ff 0%, #a5f3fc 40%, #6ee7b7 80%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .hero p {
-    font-size: clamp(14px, 1.6vw, 18px);
-    color: var(--muted);
-    max-width: 480px;
-    line-height: 1.6;
-  }
-
-  /* ── Cards ── */
-  .cards {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-    pointer-events: auto;
-  }
-  .card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 18px 26px;
-    border-radius: 20px;
-    text-decoration: none;
-    color: var(--ink);
-    background: rgba(255,255,255,.05);
-    border: 1px solid rgba(255,255,255,.1);
-    backdrop-filter: blur(16px);
-    transition: transform .22s ease, background .22s ease, box-shadow .22s ease;
-    min-width: 220px;
-  }
-  .card:hover {
-    transform: translateY(-4px);
-    background: rgba(255,255,255,.1);
-    box-shadow: 0 20px 50px -15px rgba(0,0,0,.8);
-  }
-  .card-icon {
-    width: 44px; height: 44px;
-    border-radius: 12px;
-    display: grid; place-items: center;
-    font-size: 20px;
-    flex: none;
-  }
-  .card.explore .card-icon { background: linear-gradient(135deg, #6366f1, #a855f7); }
-  .card.engine .card-icon { background: linear-gradient(135deg, #0ea5e9, #10b981); }
-  .card-text strong { display: block; font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-  .card-text span { font-size: 12px; color: var(--muted); }
-  .card-arrow { margin-left: auto; font-size: 18px; opacity: .4; transition: opacity .2s, transform .2s; }
-  .card:hover .card-arrow { opacity: .9; transform: translateX(3px); }
-
-  /* ── Hint ── */
-  .hint {
-    position: fixed;
-    bottom: 36px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 2;
-    font-size: 11px;
-    color: rgba(255,255,255,.2);
-    letter-spacing: .1em;
-    pointer-events: none;
-    animation: fadeHint 3s ease 2s forwards;
-    opacity: 0;
-  }
-  @keyframes fadeHint { 0% { opacity:0; } 20% { opacity:1; } 80% { opacity:1; } 100% { opacity:0; } }
-
-  @media (max-width: 600px) {
-    .ui { padding: 24px 20px 28px; }
-    .cards { flex-direction: column; align-items: center; }
-    .card { width: 100%; max-width: 340px; }
-  }
+  /* ── WORLD LEADERS ── */
+  #leaders-layer { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+  .wl { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 5px;
+    opacity: 0; transform: scale(.6) translateY(20px);
+    animation: wl-in .7s cubic-bezier(.34,1.4,.64,1) forwards, wl-float 6s ease-in-out infinite;
+    pointer-events: none; }
+  @keyframes wl-in { to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes wl-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+  .wl-face { width: 54px; height: 54px; border-radius: 50%; border: 2px solid rgba(255,255,255,.18);
+    box-shadow: 0 8px 24px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06);
+    overflow: hidden; background: #0d1626; flex: none; }
+  .wl-name { font-size: 9px; font-weight: 700; letter-spacing: .06em; color: rgba(255,255,255,.65);
+    text-align: center; text-shadow: 0 1px 6px rgba(0,0,0,.8); white-space: nowrap; }
+  .wl-country { font-size: 8px; color: rgba(255,255,255,.35); text-align: center; white-space: nowrap; }
+  @media (max-width:580px) { .wl { display: none; } }
 </style>
 </head>
 <body>
 
-<canvas id="globe-canvas"></canvas>
-<div class="vignette"></div>
+<div id="globe-wrap"></div>
+<div class="vig"></div>
+<div id="leaders-layer"></div>
 
 <div class="ui">
   <div class="topbar">
     <span class="wordmark">Team 128</span>
-    <div id="health-pill"><span class="pulse"></span><span id="health-text">checking…</span></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button id="fun-flow-btn" onclick="startFunFlow()" style="display:flex;align-items:center;gap:7px;padding:7px 15px;border-radius:999px;border:1px solid rgba(167,139,250,.28);background:rgba(167,139,250,.08);color:rgba(199,183,255,.8);font-size:12px;font-weight:700;letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(12px);transition:all .18s" onmouseover="this.style.background='rgba(167,139,250,.18)';this.style.borderColor='rgba(167,139,250,.55)';this.style.color='#c4b5fd'" onmouseout="this.style.background='rgba(167,139,250,.08)';this.style.borderColor='rgba(167,139,250,.28)';this.style.color='rgba(199,183,255,.8)'">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><polygon points="2,1 10,5.5 2,10" fill="currentColor"/></svg>
+        Fun Flow
+      </button>
+      <div id="health-pill"><span class="live-dot"></span><span id="health-text">checking…</span></div>
+    </div>
   </div>
 
   <div class="hero">
     <h1>Geopolitical<br>Intelligence</h1>
-    <p>Four specialist agents. One fused picture of the world.</p>
+    <p class="sub">Uncover hidden agendas.<br>Spot geopolitical patterns.</p>
+    <div class="datasources">
+      <span class="dsrc">BACI 1995–2024</span>
+      <span class="dsrc">GDELT live</span>
+      <span class="dsrc">UN GA 1989–2025</span>
+      <span class="dsrc">GGE baseline</span>
+      <span class="dsrc">UCDP conflict</span>
+      <span class="dsrc">226 economies</span>
+    </div>
+    <a class="about-pill" href="/brochure" style="margin-top:10px">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="5.5" stroke="currentColor"/><path d="M6 5.5v3M6 4h.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      What is this? How does it work?
+    </a>
+    <p class="sub" style="margin-top:8px;font-size:10.5px;opacity:.35">Click any country — see what the system finds that no single source can.</p>
   </div>
 
-  <div class="cards">
-    <a class="card explore" href="/features">
-      <div class="card-icon">🧩</div>
-      <div class="card-text">
-        <strong>Explore Modules</strong>
-        <span>Soft Power · Policy · Trade · Events</span>
-      </div>
-      <span class="card-arrow">→</span>
-    </a>
-    <a class="card engine" href="/engine">
-      <div class="card-icon">⚡</div>
-      <div class="card-text">
-        <strong>Ask the Engine</strong>
-        <span>Multi-agent geopolitical analysis</span>
-      </div>
-      <span class="card-arrow">→</span>
-    </a>
+  <div class="bottom">
+    <span class="hint-text">drag · scroll to zoom</span>
+    <div class="actions">
+      <a class="btn explore" href="/features">
+        <div class="btn-icon"><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="white" stroke-opacity=".9" stroke-width="1.2"/><circle cx="7.5" cy="7.5" r="2.5" fill="white" fill-opacity=".9"/><line x1="7.5" y1="1" x2="7.5" y2="4.9" stroke="white" stroke-opacity=".5" stroke-width="1.1"/><line x1="7.5" y1="10.1" x2="7.5" y2="14" stroke="white" stroke-opacity=".5" stroke-width="1.1"/><line x1="1" y1="7.5" x2="4.9" y2="7.5" stroke="white" stroke-opacity=".5" stroke-width="1.1"/><line x1="10.1" y1="7.5" x2="14" y2="7.5" stroke="white" stroke-opacity=".5" stroke-width="1.1"/></svg></div>
+        <div class="btn-label">Explore Agents<small>Soft Power · Policy · Trade · Events</small></div>
+        <span class="btn-arr">→</span>
+      </a>
+      <a class="btn engine" href="/engine">
+        <div class="btn-icon"><svg width="14" height="15" viewBox="0 0 14 15" fill="none"><path d="M7 1L2 8h4.5L4 14l8-8H7.5L10 1H7z" stroke="white" stroke-opacity=".9" stroke-width="1.2" stroke-linejoin="round"/></svg></div>
+        <div class="btn-label">Ask the Engine<small>Four agents, one fused answer</small></div>
+        <span class="btn-arr">→</span>
+      </a>
+    </div>
   </div>
 </div>
 
-<div class="hint">drag to rotate · scroll to zoom</div>
+<div id="tooltip"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Fun Flow: Animated self-contained scene tour -->
+<style>
+  .ff-bg { position:fixed;inset:0;z-index:30;background:#07090f;opacity:0;pointer-events:none;
+    transition:opacity .3s;display:flex;flex-direction:column; }
+  .ff-bg.open { opacity:1;pointer-events:auto; }
+  .ff-topbar { flex:none;display:flex;align-items:center;gap:10px;padding:10px 18px;
+    background:rgba(4,7,16,.96);border-bottom:1px solid rgba(255,255,255,.07); }
+  .ff-dot { width:9px;height:9px;border-radius:50%;flex:none;transition:all .4s; }
+  .ff-label { font-size:12px;font-weight:700;color:var(--ffc,#a78bfa); }
+  .ff-track { display:flex;gap:4px;margin-left:auto; }
+  .ff-tk { width:20px;height:3px;border-radius:2px;background:rgba(255,255,255,.1);transition:background .3s; }
+  .ff-tk.done { background:#4ade80; }
+  .ff-tk.active { background:var(--ffc,#a78bfa); }
+  .ff-pbtn { padding:5px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.1);
+    background:rgba(255,255,255,.04);color:rgba(255,255,255,.4);font-size:12px;font-weight:600;cursor:pointer; }
+  .ff-pbtn:disabled { opacity:.2;cursor:default; }
+  .ff-nbtn { padding:6px 15px;border-radius:7px;border:1px solid rgba(167,139,250,.35);
+    background:rgba(167,139,250,.12);color:#c4b5fd;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap; }
+  .ff-nbtn:hover { background:rgba(167,139,250,.24); }
+  .ff-xbtn { width:27px;height:27px;border-radius:7px;border:1px solid rgba(255,255,255,.1);
+    background:rgba(255,255,255,.04);cursor:pointer;color:rgba(255,255,255,.4);font-size:14px;
+    display:grid;place-items:center; }
+  .ff-xbtn:hover { background:rgba(255,255,255,.1);color:white; }
+
+  /* Scene container */
+  #ff-content { flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column; }
+  #ff-content.ff-splash { overflow:hidden; }
+  #ff-content::-webkit-scrollbar { width:4px; }
+  #ff-content::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1);border-radius:2px; }
+
+  /* Shared scene styles */
+  .ffs { padding:20px 24px;color:#e8edf5;font-size:13px;max-width:860px;margin:0 auto; }
+  .ffs-ey { font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:5px; }
+  .ffs-h1 { font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:10px; }
+  .ffs-pills { display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px; }
+  .ffs-pill { font-size:10px;padding:2px 8px;border:1px solid rgba(255,255,255,.12);border-radius:4px;color:rgba(255,255,255,.4); }
+  .ffs-desc { font-size:12px;color:rgba(255,255,255,.42);line-height:1.65;margin-bottom:14px;max-width:520px; }
+  .ffs-ticker { display:flex;gap:22px;padding:7px 0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:16px; }
+  .ffs-tick { font-size:12px;font-weight:700;white-space:nowrap; }
+  .ffs-tick.u { color:#4ade80; } .ffs-tick.d { color:#f87171; }
+  .ffs-slabel { font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:7px; }
+  .ffs-box { background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;
+    padding:9px 12px;min-height:40px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px; }
+  .ffs-chip { display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;border:1px solid;font-size:12px;font-weight:600;animation:rise .25s ease both; }
+  .ffs-row { display:flex;gap:20px;margin-bottom:14px;flex-wrap:wrap; }
+  .ffs-yr { color:#67e8f9;font-weight:700;font-size:13px; }
+  .ffs-sel { background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:#e8edf5;padding:5px 9px;font-size:12px; }
+  /* country rows */
+  .ffs-crows { display:grid;gap:7px;margin-top:12px; }
+  .ffs-crow { display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:9px;border-left:3px solid;animation:rise .3s ease both; }
+  .ffs-cname { font-size:13px;font-weight:700;min-width:88px; }
+  .ffs-barw { flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden; }
+  .ffs-bar { height:100%;border-radius:3px;width:0;transition:width 1.1s ease; }
+  .ffs-snum { font-size:13px;font-weight:800;min-width:36px;text-align:right; }
+  .ffs-chg { font-size:11px;font-weight:700;min-width:46px;text-align:right; }
+  /* shap */
+  .ffs-shap { display:grid;gap:8px;margin-top:12px; }
+  .ffs-sdim { display:flex;align-items:center;gap:10px; }
+  .ffs-sdname { font-size:12px;min-width:80px;color:rgba(255,255,255,.65); }
+  .ffs-sdbarw { flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden; }
+  .ffs-sdbar { height:100%;border-radius:4px;width:0;transition:width 1.2s ease; }
+  .ffs-sdval { font-size:11px;font-weight:700;min-width:36px;text-align:right; }
+  /* tabs */
+  .ffs-tabs { display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:14px;overflow-x:auto; }
+  .ffs-tab { padding:8px 13px;font-size:12px;font-weight:600;color:rgba(255,255,255,.35);border:none;background:none;
+    cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap; }
+  .ffs-tab.act { color:var(--ffc,#f5b942);border-bottom-color:var(--ffc,#f5b942); }
+  /* input line */
+  .ffs-inp { background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:7px;
+    padding:7px 11px;color:#e8edf5;font-size:13px;display:flex;align-items:center;gap:2px;min-height:36px;margin-bottom:10px; }
+  .ffs-cur { display:inline-block;width:2px;height:13px;background:var(--ffc,#a78bfa);opacity:.9;
+    animation:blink .7s step-end infinite;vertical-align:middle; }
+  /* AI analysis box */
+  .ffs-ai { background:rgba(245,185,66,.05);border:1px solid rgba(245,185,66,.2);border-radius:11px;padding:13px 15px;animation:rise .35s ease both; }
+  .ffs-ai-hd { display:flex;gap:9px;align-items:center;margin-bottom:9px; }
+  .ffs-ai-badge { background:rgba(255,255,255,.12);color:white;font-size:9px;font-weight:800;letter-spacing:.08em;padding:3px 7px;border-radius:4px; }
+  .ffs-ai-bloc { font-size:11px;font-weight:700;color:#4ade80; }
+  .ffs-ai-ul { list-style:none;padding:0;margin:0 0 10px; }
+  .ffs-ai-ul li { font-size:12px;color:rgba(232,237,245,.7);padding:3px 0 3px 14px;position:relative;line-height:1.5; }
+  .ffs-ai-ul li::before { content:'•';position:absolute;left:0;color:rgba(255,255,255,.25); }
+  .ffs-badges { display:flex;gap:5px;flex-wrap:wrap; }
+  .ffs-bdg { padding:3px 9px;border-radius:999px;border:1px solid rgba(245,185,66,.3);font-size:11px;color:rgba(245,185,66,.75); }
+  .ffs-bdg.r { border-color:rgba(248,113,113,.3);color:rgba(248,113,113,.8); }
+  /* trade deps */
+  .ffs-deps { display:grid;gap:7px;margin-top:10px; }
+  .ffs-dep { display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;border:1px solid rgba(52,211,153,.18);background:rgba(52,211,153,.04);animation:rise .3s ease both; }
+  .ffs-dep-flag { font-size:17px; }
+  .ffs-dep-name { font-size:13px;font-weight:700;flex:1; }
+  .ffs-dep-pct { font-size:13px;font-weight:800;color:#34d399; }
+  .ffs-dep-bw { width:70px;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden; }
+  .ffs-dep-b { height:100%;background:#34d399;border-radius:3px;width:0;transition:width 1.1s ease; }
+  /* events */
+  .ffs-evs { display:grid;gap:7px;margin-top:10px; }
+  .ffs-ev { display:flex;gap:10px;padding:9px 12px;border-radius:9px;border:1px solid;animation:rise .3s ease both; }
+  .ffs-ev.p { background:rgba(74,222,128,.04);border-color:rgba(74,222,128,.2); }
+  .ffs-ev.n { background:rgba(248,113,113,.04);border-color:rgba(248,113,113,.2); }
+  .ffs-ev.e { background:rgba(255,255,255,.025);border-color:rgba(255,255,255,.08); }
+  .ffs-gs { font-size:14px;font-weight:800;min-width:34px;text-align:center; }
+  .ffs-ev.p .ffs-gs { color:#4ade80; } .ffs-ev.n .ffs-gs { color:#f87171; } .ffs-ev.e .ffs-gs { color:rgba(255,255,255,.35); }
+  .ffs-evb { flex:1; }
+  .ffs-evpair { font-size:10.5px;font-weight:700;color:rgba(255,255,255,.4);margin-bottom:2px; }
+  .ffs-evdesc { font-size:12px;color:rgba(232,237,245,.7);line-height:1.4; }
+  .ffs-baseline { display:flex;align-items:center;gap:14px;padding:12px 14px;background:rgba(244,114,182,.06);border:1px solid rgba(244,114,182,.2);border-radius:10px;margin-top:12px;animation:rise .4s ease both; }
+  .ffs-bl-l { flex:1;font-size:12px;color:rgba(255,255,255,.45);line-height:1.5; }
+  .ffs-bl-s { font-size:22px;font-weight:800;color:#f87171; }
+  .ffs-bl-ref { font-size:11px;color:rgba(255,255,255,.3);margin-top:2px; }
+  .ffs-dev-flag { padding:5px 11px;border-radius:999px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.28);font-size:11px;color:#f87171;font-weight:700;white-space:nowrap; }
+  /* stat cards */
+  .ffs-stats { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px; }
+  .ffs-stat { background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:12px;text-align:center; }
+  .ffs-stat-n { font-size:19px;font-weight:800;margin-bottom:3px; }
+  .ffs-stat-l { font-size:10px;color:rgba(255,255,255,.32); }
+  /* splash */
+  .ff-splash { flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;gap:14px;padding:40px; }
+  .ff-splash h2 { font-size:clamp(22px,3vw,30px);font-weight:800;letter-spacing:-.03em;
+    background:linear-gradient(135deg,#c7d2fe,#67e8f9,#6ee7b7);-webkit-background-clip:text;background-clip:text;color:transparent; }
+  .ff-splash p { font-size:14px;color:rgba(255,255,255,.42);max-width:420px;line-height:1.7; }
+  .ff-slinks { display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:6px; }
+  .ff-sl { padding:9px 18px;border-radius:10px;text-decoration:none;font-size:13px;font-weight:700;border:1px solid;transition:all .18s; }
+  .ff-sl.a { background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.3);color:#c7d2fe; }
+  .ff-sl.b { background:rgba(6,182,212,.07);border-color:rgba(6,182,212,.25);color:#67e8f9; }
+</style>
+
+<div class="ff-bg" id="ff-bg">
+  <div class="ff-topbar">
+    <div class="ff-dot" id="ff-dot"></div>
+    <span class="ff-label" id="ff-label">Fun Flow</span>
+    <div class="ff-track" id="ff-track"></div>
+    <button class="ff-pbtn" id="ff-pbtn" onclick="ffPrev()" disabled>← Back</button>
+    <button class="ff-nbtn" id="ff-nbtn" onclick="ffNext()">Start →</button>
+    <button class="ff-xbtn" onclick="closeFunFlow()">✕</button>
+  </div>
+  <div id="ff-content" class="ff-splash">
+    <h2>Four agents. One tour.</h2>
+    <p>Watch all four dashboards come alive — with live tab switching, typing and results — across 8 scripted scenes.</p>
+    <p style="font-size:12px;opacity:.35">8 scenes · step through with the buttons above</p>
+  </div>
+</div>
+
+<!-- Country snapshot panel -->
+<div class="snap-bg" id="snap-bg">
+  <div class="snap">
+    <div class="snap-head">
+      <div class="snap-country">
+        <span class="snap-flag" id="s-flag">🌍</span>
+        <div class="snap-info">
+          <h2 id="s-name">Country</h2>
+          <p id="s-sub">Running all four agents…</p>
+        </div>
+        <button class="snap-close" id="snap-close">✕</button>
+      </div>
+    </div>
+    <div class="snap-body">
+      <div class="findings-label" id="findings-label">
+        <span class="fl-spinner" id="fl-spinner"></span>
+        <span id="findings-label-text">Analysing across all four agents…</span>
+      </div>
+      <div id="findings-list"></div>
+      <div id="snap-status-wrap"></div>
+    </div>
+    <div class="snap-foot">
+      <div class="foot-label">Choose your analysis angle</div>
+      <div class="agent-grid">
+        <a class="agent-card sp" id="a-sp" href="#">
+          <div class="ag-icon">🌐</div>
+          <div class="ag-text"><strong>Soft Power</strong><span>Scores, forecasts & SHAP drivers</span></div>
+        </a>
+        <a class="agent-card ps" id="a-ps" href="#">
+          <div class="ag-icon">🗳️</div>
+          <div class="ag-text"><strong>Policy Stance</strong><span>UN votes, blocs & conflicts</span></div>
+        </a>
+        <a class="agent-card tr" id="a-tr" href="#">
+          <div class="ag-icon">📦</div>
+          <div class="ag-text"><strong>Trade Intelligence</strong><span>BACI flows & shock risk</span></div>
+        </a>
+        <a class="agent-card ev" id="a-ev" href="#">
+          <div class="ag-icon">📡</div>
+          <div class="ag-text"><strong>Events Today</strong><span>GDELT live & GGE baseline</span></div>
+        </a>
+      </div>
+      <a class="engine-btn" id="a-eng" href="#">
+        <div class="ag-icon">⚡</div>
+        <div class="ag-text"><strong>GEOINT Engine</strong><span>All four agents fused — full analysis</span></div>
+        <span class="eg-arr">→</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
+<script src="https://unpkg.com/globe.gl/dist/globe.gl.min.js"></script>
 <script>
-// ── Globe ──────────────────────────────────────────────────────────────
-const canvas = document.getElementById('globe-canvas');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setClearColor(0x000000, 0);
+const ISO = {
+  4:'Afghanistan',8:'Albania',12:'Algeria',24:'Angola',32:'Argentina',
+  36:'Australia',40:'Austria',50:'Bangladesh',56:'Belgium',64:'Bhutan',
+  68:'Bolivia',76:'Brazil',100:'Bulgaria',116:'Cambodia',120:'Cameroon',
+  124:'Canada',140:'Central African Republic',144:'Sri Lanka',152:'Chile',
+  156:'China',170:'Colombia',178:'Republic of Congo',180:'DR Congo',
+  188:'Costa Rica',192:'Cuba',203:'Czech Republic',208:'Denmark',
+  218:'Ecuador',818:'Egypt',231:'Ethiopia',246:'Finland',250:'France',
+  266:'Gabon',276:'Germany',288:'Ghana',300:'Greece',320:'Guatemala',
+  332:'Haiti',340:'Honduras',356:'India',360:'Indonesia',364:'Iran',
+  368:'Iraq',372:'Ireland',376:'Israel',380:'Italy',388:'Jamaica',
+  392:'Japan',400:'Jordan',398:'Kazakhstan',404:'Kenya',408:'North Korea',
+  410:'South Korea',414:'Kuwait',418:'Laos',422:'Lebanon',426:'Lesotho',
+  430:'Liberia',434:'Libya',484:'Mexico',496:'Mongolia',504:'Morocco',
+  508:'Mozambique',516:'Namibia',524:'Nepal',528:'Netherlands',554:'New Zealand',
+  558:'Nicaragua',562:'Niger',566:'Nigeria',578:'Norway',512:'Oman',
+  586:'Pakistan',591:'Panama',598:'Papua New Guinea',600:'Paraguay',
+  604:'Peru',608:'Philippines',616:'Poland',620:'Portugal',
+  634:'Qatar',642:'Romania',643:'Russia',646:'Rwanda',682:'Saudi Arabia',
+  686:'Senegal',694:'Sierra Leone',706:'Somalia',710:'South Africa',
+  724:'Spain',729:'Sudan',752:'Sweden',756:'Switzerland',760:'Syria',
+  158:'Taiwan',762:'Tajikistan',764:'Thailand',768:'Togo',792:'Turkey',
+  800:'Uganda',804:'Ukraine',784:'United Arab Emirates',826:'United Kingdom',
+  840:'United States',858:'Uruguay',860:'Uzbekistan',862:'Venezuela',
+  704:'Vietnam',887:'Yemen',894:'Zambia',716:'Zimbabwe'
+};
+const FLAGS = {
+  'India':'🇮🇳','China':'🇨🇳','United States':'🇺🇸','Russia':'🇷🇺',
+  'United Kingdom':'🇬🇧','France':'🇫🇷','Germany':'🇩🇪','Japan':'🇯🇵',
+  'Brazil':'🇧🇷','Australia':'🇦🇺','Canada':'🇨🇦','South Africa':'🇿🇦',
+  'Saudi Arabia':'🇸🇦','Iran':'🇮🇷','Pakistan':'🇵🇰','Nigeria':'🇳🇬',
+  'Egypt':'🇪🇬','Turkey':'🇹🇷','Israel':'🇮🇱','Ukraine':'🇺🇦',
+  'South Korea':'🇰🇷','North Korea':'🇰🇵','Vietnam':'🇻🇳','Indonesia':'🇮🇩',
+  'Mexico':'🇲🇽','Argentina':'🇦🇷','Italy':'🇮🇹','Spain':'🇪🇸',
+  'Poland':'🇵🇱','Netherlands':'🇳🇱','Sweden':'🇸🇪','Norway':'🇳🇴',
+  'Thailand':'🇹🇭','Philippines':'🇵🇭','Bangladesh':'🇧🇩','Ethiopia':'🇪🇹',
+};
+function getFlag(n) { return FLAGS[n] || '🌍'; }
+const AGENT_LABELS = { soft_power:'Soft Power', policy_stance:'Policy Stance', trade_intelligence:'Trade', event_summarization:'Events' };
+const KIND_LABEL = { divergence:'Divergence', corroboration:'Corroboration', cross_agent:'Cross-agent', insight:'Finding' };
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-camera.position.z = 2.6;
+// Globe
+let selectedCountry = null;
+const world = Globe()
+  .backgroundColor('rgba(0,0,0,0)')
+  .atmosphereColor('#1a4a9f').atmosphereAltitude(0.18)
+  .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
+  .polygonAltitude(d => d === selectedCountry ? 0.025 : 0.006)
+  .polygonCapColor(d => d === selectedCountry ? 'rgba(99,102,241,0.75)' : 'rgba(30,50,100,0.42)')
+  .polygonSideColor(() => 'rgba(10,20,50,0.3)')
+  .polygonStrokeColor(() => 'rgba(99,140,255,0.38)')
+  .polygonLabel(() => '')
+  .onPolygonHover(hd => {
+    world.polygonAltitude(d => d === hd || d === selectedCountry ? 0.025 : 0.006)
+        .polygonCapColor(d => d === selectedCountry ? 'rgba(99,102,241,0.75)' : d === hd ? 'rgba(99,180,255,0.6)' : 'rgba(30,50,100,0.42)');
+    document.getElementById('globe-wrap').style.cursor = hd ? 'pointer' : 'default';
+    showTooltip(hd);
+  })
+  .onPolygonClick(d => { if (d && d._name) { selectedCountry = d; world.polygonAltitude(x => x === d ? 0.025 : 0.006).polygonCapColor(x => x === d ? 'rgba(99,102,241,0.75)' : 'rgba(30,50,100,0.42)'); openSnap(d); } })
+  (document.getElementById('globe-wrap'));
 
-// ── Sizes ──
-function resize() {
-  const w = window.innerWidth, h = window.innerHeight;
-  renderer.setSize(w, h);
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-}
-resize();
-window.addEventListener('resize', resize);
+world.controls().autoRotate = true;
+world.controls().autoRotateSpeed = 0.4;
+world.controls().enableDamping = true;
+world.pointOfView({ altitude: 2.2 });
+function resize() { world.width(window.innerWidth); world.height(window.innerHeight); }
+resize(); window.addEventListener('resize', resize);
 
-// ── Globe sphere ──
-const GEO = new THREE.SphereGeometry(1, 64, 64);
-
-// Procedural texture: ocean + lat/lon grid + glowing dots
-function buildGlobeTexture() {
-  const size = 1024;
-  const cv = document.createElement('canvas');
-  cv.width = cv.height = size;
-  const ctx = cv.getContext('2d');
-
-  // Ocean base gradient
-  const ocean = ctx.createRadialGradient(size*.4, size*.35, 0, size/2, size/2, size*.7);
-  ocean.addColorStop(0, '#0d2a4a');
-  ocean.addColorStop(.5, '#071829');
-  ocean.addColorStop(1, '#040d1a');
-  ctx.fillStyle = ocean;
-  ctx.fillRect(0, 0, size, size);
-
-  // Lat/lon grid
-  ctx.strokeStyle = 'rgba(99,102,241,0.18)';
-  ctx.lineWidth = 0.8;
-  for (let lat = -80; lat <= 80; lat += 20) {
-    const y = ((lat + 90) / 180) * size;
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size, y); ctx.stroke();
-  }
-  for (let lon = 0; lon < 360; lon += 20) {
-    const x = (lon / 360) * size;
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size); ctx.stroke();
-  }
-
-  // Glowing city dots
-  const cities = [
-    [28.6,77.2],[51.5,-0.1],[40.7,-74],[35.7,139.7],[31.2,121.5],
-    [-33.9,18.4],[48.9,2.3],[55.8,37.6],[19.1,72.9],[1.3,103.8],
-    [25.2,55.3],[-23.6,-46.6],[41.0,28.9],[37.6,127.0],[52.5,13.4],
-    [33.9,-118.2],[43.7,-79.4],[-37.8,145],[30.0,31.2],[6.5,3.4],
-  ];
-  cities.forEach(([lat, lon]) => {
-    const x = ((lon + 180) / 360) * size;
-    const y = ((90 - lat) / 180) * size;
-    const colors = ['#6366f1','#06b6d4','#10b981','#f43f5e','#a78bfa','#34d399'];
-    const col = colors[Math.floor(Math.random() * colors.length)];
-    const r = 2.5 + Math.random() * 2;
-    const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 3.5);
-    grd.addColorStop(0, col);
-    grd.addColorStop(.4, col + 'aa');
-    grd.addColorStop(1, 'transparent');
-    ctx.fillStyle = grd;
-    ctx.beginPath();
-    ctx.arc(x, y, r * 3.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(x, y, r * 0.7, 0, Math.PI * 2);
-    ctx.fill();
+fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+  .then(r => r.json()).then(data => {
+    const countries = topojson.feature(data, data.objects.countries);
+    countries.features.forEach(f => { f._name = ISO[+f.id] || null; });
+    world.polygonsData(countries.features.filter(f => f._name));
   });
 
-  return new THREE.CanvasTexture(cv);
+// Tooltip
+const tt = document.getElementById('tooltip');
+document.addEventListener('mousemove', e => { tt.style.left=(e.clientX+14)+'px'; tt.style.top=(e.clientY-10)+'px'; });
+function showTooltip(d) {
+  if (d && d._name) { tt.textContent = getFlag(d._name)+'  '+d._name; tt.classList.add('show'); }
+  else tt.classList.remove('show');
 }
 
-const globeMat = new THREE.MeshPhongMaterial({
-  map: buildGlobeTexture(),
-  shininess: 60,
-  specular: new THREE.Color(0x1a3a6a),
-});
-const globe = new THREE.Mesh(GEO, globeMat);
-scene.add(globe);
+// Snapshot
+let currentReader = null;
+const snapBg = document.getElementById('snap-bg');
+document.getElementById('snap-close').addEventListener('click', closeSnap);
+snapBg.addEventListener('click', e => { if (e.target === snapBg) closeSnap(); });
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeSnap(); });
 
-// Atmosphere glow (additive shell)
-const atmMat = new THREE.MeshPhongMaterial({
-  color: 0x1a4a9f,
-  emissive: 0x0a1f5c,
-  transparent: true,
-  opacity: 0.18,
-  side: THREE.BackSide,
-});
-const atm = new THREE.Mesh(new THREE.SphereGeometry(1.08, 64, 64), atmMat);
-scene.add(atm);
+async function openSnap(d) {
+  const name = d._name, enc = encodeURIComponent(name);
+  document.getElementById('s-flag').textContent = getFlag(name);
+  document.getElementById('s-name').textContent = name;
+  document.getElementById('s-sub').textContent = 'Running all four agents…';
+  document.getElementById('findings-label-text').textContent = 'Analysing across all four agents…';
+  document.getElementById('fl-spinner').style.display = '';
+  document.getElementById('findings-list').innerHTML = '';
+  document.getElementById('snap-status-wrap').innerHTML = '';
+  document.getElementById('a-sp').href = `https://softpower.65.1.109.59.sslip.io?country=${enc}`;
+  document.getElementById('a-ps').href = `https://policystance.65.1.109.59.sslip.io?country=${enc}`;
+  document.getElementById('a-tr').href = `https://trade.65.1.109.59.sslip.io?country=${enc}`;
+  document.getElementById('a-ev').href = `https://events.65.1.109.59.sslip.io?country=${enc}`;
+  document.getElementById('a-eng').href = `/engine?q=${encodeURIComponent('Tell me about '+name)}`;
+  world.controls().autoRotate = false;
+  snapBg.classList.add('open');
+  if (currentReader) { try { currentReader.cancel(); } catch{} currentReader = null; }
 
-// Outer rim glow
-const rimMat = new THREE.MeshPhongMaterial({
-  color: 0x06b6d4,
-  emissive: 0x06b6d4,
-  transparent: true,
-  opacity: 0.07,
-  side: THREE.BackSide,
-});
-scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.14, 64, 64), rimMat));
+  const list = document.getElementById('findings-list');
+  const statusWrap = document.getElementById('snap-status-wrap');
+  let agentsDone = 0, insightCount = 0;
 
-// ── Arc lines between cities ──
-function latLonToVec3(lat, lon, r=1.01) {
-  const phi = (90 - lat) * Math.PI / 180;
-  const theta = (lon + 180) * Math.PI / 180;
-  return new THREE.Vector3(
-    -r * Math.sin(phi) * Math.cos(theta),
-     r * Math.cos(phi),
-     r * Math.sin(phi) * Math.sin(theta)
-  );
-}
+  try {
+    const res = await fetch('/run', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ question: `Country profile of ${name}`, intent: 'country_profile' })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    currentReader = res.body.getReader();
+    const dec = new TextDecoder(); let buf = '';
 
-function addArc(a, b, color) {
-  const start = latLonToVec3(...a);
-  const end   = latLonToVec3(...b);
-  const mid   = start.clone().add(end).normalize().multiplyScalar(1.25);
-  const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
-  const pts = curve.getPoints(60);
-  const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.5 });
-  scene.add(new THREE.Line(geo, mat));
-}
-
-const arcPairs = [
-  [[51.5,-0.1],[40.7,-74],0x6366f1],
-  [[51.5,-0.1],[35.7,139.7],0x06b6d4],
-  [[28.6,77.2],[1.3,103.8],0x10b981],
-  [[31.2,121.5],[35.7,139.7],0xa78bfa],
-  [[40.7,-74],[33.9,-118.2],0xf43f5e],
-  [[28.6,77.2],[30.0,31.2],0x34d399],
-  [[48.9,2.3],[55.8,37.6],0x6366f1],
-  [[-23.6,-46.6],[40.7,-74],0xf43f5e],
-  [[25.2,55.3],[28.6,77.2],0x06b6d4],
-  [[43.7,-79.4],[51.5,-0.1],0xa78bfa],
-];
-arcPairs.forEach(([a,b,c]) => addArc(a,b,c));
-
-// ── Lighting ──
-scene.add(new THREE.AmbientLight(0x1a2a4a, 1.2));
-const sun = new THREE.DirectionalLight(0x7dd3fc, 2.0);
-sun.position.set(5, 3, 5);
-scene.add(sun);
-const fill = new THREE.DirectionalLight(0x6366f1, 0.5);
-fill.position.set(-4, -2, -3);
-scene.add(fill);
-
-// ── Mouse drag rotation ──
-let isDragging = false, prevX = 0, prevY = 0;
-let velX = 0, velY = 0;
-let rotX = 0.3, rotY = 0;
-
-canvas.addEventListener('mousedown', e => { isDragging = true; prevX = e.clientX; prevY = e.clientY; velX = velY = 0; });
-window.addEventListener('mouseup', () => { isDragging = false; });
-window.addEventListener('mousemove', e => {
-  if (!isDragging) return;
-  velX = (e.clientY - prevY) * 0.005;
-  velY = (e.clientX - prevX) * 0.005;
-  rotX += velX; rotY += velY;
-  prevX = e.clientX; prevY = e.clientY;
-});
-
-// Touch
-canvas.addEventListener('touchstart', e => { isDragging = true; prevX = e.touches[0].clientX; prevY = e.touches[0].clientY; velX = velY = 0; }, { passive: true });
-window.addEventListener('touchend', () => { isDragging = false; });
-window.addEventListener('touchmove', e => {
-  if (!isDragging) return;
-  velX = (e.touches[0].clientY - prevY) * 0.005;
-  velY = (e.touches[0].clientX - prevX) * 0.005;
-  rotX += velX; rotY += velY;
-  prevX = e.touches[0].clientX; prevY = e.touches[0].clientY;
-}, { passive: true });
-
-// Scroll zoom
-let zoom = 2.6;
-window.addEventListener('wheel', e => {
-  zoom = Math.max(1.8, Math.min(4.5, zoom + e.deltaY * 0.003));
-}, { passive: true });
-
-// ── Animate ──
-const clock = new THREE.Clock();
-function animate() {
-  requestAnimationFrame(animate);
-  const dt = clock.getDelta();
-
-  if (!isDragging) {
-    rotY += 0.0015;
-    velX *= 0.92; velY *= 0.92;
-    rotX += velX; rotY += velY;
+    while (true) {
+      const { done, value } = await currentReader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n'); buf = lines.pop();
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let evt; try { evt = JSON.parse(line); } catch { continue; }
+        if (evt.type === 'plan') {
+          document.getElementById('s-sub').textContent = `Profiling ${name} — 4 agents running`;
+        }
+        if (evt.type === 'agent') {
+          agentsDone++;
+          document.getElementById('s-sub').textContent = `${agentsDone}/4 agents done…`;
+          const insights = (evt.result && evt.result.insights) || [];
+          for (const ins of insights.slice(0,2)) {
+            if (!ins.claim || ins.claim.length < 20) continue;
+            addFinding(list, 'insight', AGENT_LABELS[evt.agent]||evt.agent, ins.claim, [evt.agent]);
+            insightCount++;
+          }
+        }
+        if (evt.type === 'fusion') {
+          const allFindings = (evt.fused && evt.fused.findings) || [];
+          const cross = allFindings.filter(f => f.kind !== 'insight').slice(0, 6);
+          list.innerHTML = '';
+          const show = cross.length ? cross : allFindings.filter(f => f.kind === 'insight' && f.claim && f.claim.length > 20).slice(0, 6);
+          for (const f of show) addFinding(list, f.kind, f.title||f.entity_name||'Finding', f.claim, f.agents||[]);
+          document.getElementById('fl-spinner').style.display = 'none';
+          const n = show.length;
+          document.getElementById('findings-label-text').textContent = `${n} finding${n!==1?'s':''} from ${agentsDone} agents`;
+          document.getElementById('s-sub').textContent = 'Analysis complete';
+        }
+      }
+    }
+  } catch(err) {
+    document.getElementById('fl-spinner').style.display = 'none';
+    document.getElementById('s-sub').textContent = 'Analysis unavailable';
+    if (!list.children.length)
+      statusWrap.innerHTML = '<div class="snap-status snap-err">Could not reach the analysis engine. Choose an agent below to explore directly.</div>';
   }
-
-  rotX = Math.max(-Math.PI/2, Math.min(Math.PI/2, rotX));
-  globe.rotation.x = rotX;
-  globe.rotation.y = rotY;
-  atm.rotation.x = rotX;
-  atm.rotation.y = rotY;
-
-  camera.position.z += (zoom - camera.position.z) * 0.08;
-  renderer.render(scene, camera);
 }
-animate();
 
-// ── Health check ──
+function addFinding(list, kind, title, claim, agents) {
+  const div = document.createElement('div');
+  div.className = 'finding '+kind;
+  div.innerHTML = `<div class="finding-kind">${KIND_LABEL[kind]||kind}</div><div class="finding-title">${title}</div><div class="finding-claim">${claim}</div><div class="finding-agents">${agents.map(a=>`<span class="fag">${AGENT_LABELS[a]||a}</span>`).join('')}</div>`;
+  list.appendChild(div);
+}
+
+function closeSnap() {
+  snapBg.classList.remove('open');
+  if (currentReader) { try { currentReader.cancel(); } catch{} currentReader = null; }
+  world.controls().autoRotate = true;
+  selectedCountry = null;
+  world.polygonAltitude(0.006).polygonCapColor('rgba(30,50,100,0.42)');
+}
+
 (async () => {
   try {
     const data = await (await fetch('/agents')).json();
-    const up = Object.values(data).filter(a => a.status === 'ok').length;
-    const total = Object.keys(data).length;
-    document.getElementById('health-text').textContent = `${up} of ${total} agents online`;
-  } catch {
-    document.getElementById('health-text').textContent = 'agents unreachable';
-  }
+    const up = Object.values(data).filter(a => a.status==='ok').length;
+    document.getElementById('health-text').textContent = `${up} of ${Object.keys(data).length} agents online`;
+  } catch { document.getElementById('health-text').textContent = 'agents offline'; }
+})();
+
+// ═══════════════════════════════════════════════
+//  FUN FLOW — animated self-contained scene tour
+// ═══════════════════════════════════════════════
+function ffd(ms) { return new Promise(r=>setTimeout(r,ms)); }
+async function ffType(id, text, sp=38) {
+  const el=document.getElementById(id); if(!el)return;
+  el.textContent='';
+  for(let i=0;i<text.length;i++){el.textContent=text.slice(0,i+1);await ffd(sp);}
+}
+function ffChip(name,col){ return `<span class="ffs-chip" style="border-color:${col};color:${col}"><span style="width:7px;height:7px;border-radius:50%;background:${col};display:inline-block;flex:none"></span>${name} ×</span>`; }
+function ffTab(labels, activeIdx, color){
+  return `<div class="ffs-tabs">${labels.map((l,i)=>`<button class="ffs-tab${i===activeIdx?' act':''}" id="fftab${i}" style="${i===activeIdx?`--ffc:${color}`:''}">${l}</button>`).join('')}</div>`;
+}
+async function ffClickTab(fromIdx, toIdx, color){
+  const f=document.getElementById('fftab'+fromIdx), t=document.getElementById('fftab'+toIdx);
+  if(!f||!t)return;
+  f.classList.remove('act'); f.style='';
+  await ffd(200);
+  t.classList.add('act'); t.style=`--ffc:${color}`;
+}
+
+const FF_SCENES = [
+  // ─── Scene 1: Soft Power overview ───
+  { color:'#a78bfa', label:'Soft Power Agent · Overview',
+    render(){return `<div class="ffs">
+      <div class="ffs-ey">GLOBAL INFLUENCE TRACKING · 2000–2024</div>
+      <div class="ffs-h1">Soft Power Intelligence</div>
+      <div class="ffs-pills"><span class="ffs-pill">195 STATES</span><span class="ffs-pill">2000–2024</span><span class="ffs-pill">5 CAPITAL DIMENSIONS</span></div>
+      <div class="ffs-desc">A comparative ledger of national soft power — composite scores, trajectories, and the measured drivers behind each rise or fall.</div>
+      <div class="ffs-ticker">
+        <span class="ffs-tick d">▼ PLW −14.6</span><span class="ffs-tick u">▲ TUV +31.4</span>
+        <span class="ffs-tick d">▼ YEM −12.1</span><span class="ffs-tick u">▲ TON +21.3</span>
+        <span class="ffs-tick d">▼ VEN −11.5</span><span class="ffs-tick u">▲ BWA +18.9</span>
+      </div>
+      <div class="ffs-slabel">COMPARE COUNTRIES</div>
+      <div class="ffs-box" id="ffs-chips"></div>
+      <div class="ffs-row">
+        <div><div class="ffs-slabel">COMPARISON WINDOW</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+            <span class="ffs-yr" id="ffs-y1">2000</span> → <span class="ffs-yr" id="ffs-y2">2024</span>
+          </div></div>
+        <div><div class="ffs-slabel">TREND METRIC</div>
+          <select class="ffs-sel" id="ffs-met"><option>Composite Score</option><option>Culture</option><option>Diplomacy</option></select>
+        </div>
+      </div>
+      <div id="ffs-crows"></div>
+    </div>`; },
+    async animate(){
+      const pairs=[['India','#4ade80',68.4,'+4.2'],['Germany','#60a5fa',81.2,'+1.8'],['China','#f87171',74.6,'+6.1'],['France','#fb923c',79.1,'−0.9']];
+      const chips=document.getElementById('ffs-chips'); if(!chips)return;
+      for(const[n,c] of pairs){ await ffd(500); if(!document.getElementById('ffs-chips'))return;
+        chips.insertAdjacentHTML('beforeend',ffChip(n,c)); }
+      await ffd(600);
+      const yr1=document.getElementById('ffs-y1'); if(yr1) yr1.textContent='2010';
+      const sel=document.getElementById('ffs-met'); if(sel){sel.selectedIndex=0;}
+      const rows=document.getElementById('ffs-crows'); if(!rows)return;
+      rows.innerHTML=`<div class="ffs-crows">${pairs.map(([n,c,s,ch],i)=>`
+        <div class="ffs-crow" style="border-left-color:${c};animation-delay:${i*0.1}s">
+          <span class="ffs-cname">${n}</span>
+          <div class="ffs-barw"><div class="ffs-bar" id="ffbar${i}" style="background:${c}"></div></div>
+          <span class="ffs-snum" style="color:${c}">${s}</span>
+          <span class="ffs-chg" style="color:${ch[0]==='+'?'#4ade80':'#f87171'}">${ch}</span>
+        </div>`).join('')}</div>`;
+      await ffd(100);
+      pairs.forEach(([,,s],i)=>{ const b=document.getElementById('ffbar'+i); if(b) b.style.width=s+'%'; });
+    }
+  },
+  // ─── Scene 2: Soft Power SHAP India ───
+  { color:'#a78bfa', label:'Soft Power Agent · India SHAP',
+    render(){return `<div class="ffs">
+      <div class="ffs-ey">SOFT POWER AGENT · INDIA</div>
+      <div class="ffs-h1">India — What drove the rise?</div>
+      <div class="ffs-desc">Kalman-smoothed composite score 2000–2024. SHAP attribution decomposes each year's change into its five dimensional drivers.</div>
+      <div class="ffs-row">
+        <div style="flex:1;background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.18);border-radius:10px;padding:12px">
+          <div class="ffs-slabel">COMPOSITE SCORE 2024</div>
+          <div style="font-size:28px;font-weight:800;color:#a78bfa">68.4</div>
+          <div style="font-size:11px;color:#4ade80;margin-top:3px">▲ +4.2 vs 2010 baseline</div>
+        </div>
+        <div style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px">
+          <div class="ffs-slabel">KALMAN FORECAST 2026</div>
+          <div style="font-size:28px;font-weight:800;color:#67e8f9">71.1</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px">± 2.3 confidence band</div>
+        </div>
+      </div>
+      <div class="ffs-slabel" style="margin-top:4px">SHAP ATTRIBUTION — WHAT DROVE IT</div>
+      <div class="ffs-shap" id="ffs-shap"></div>
+      <div style="margin-top:14px"><div class="ffs-slabel">CLOSEST PEER COUNTRIES</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:6px" id="ffs-peers"></div></div>
+    </div>`; },
+    async animate(){
+      const dims=[['Culture',62,'#f472b6'],['Diplomacy',71,'#60a5fa'],['Education',74,'#4ade80'],['Digital',55,'#fb923c'],['Economy',66,'#a78bfa']];
+      const shap=document.getElementById('ffs-shap'); if(!shap)return;
+      shap.innerHTML=dims.map(([n,v,c],i)=>`<div class="ffs-sdim" style="animation-delay:${i*.1}s">
+        <span class="ffs-sdname">${n}</span>
+        <div class="ffs-sdbarw"><div class="ffs-sdbar" id="ffsdb${i}" style="background:${c}"></div></div>
+        <span class="ffs-sdval" style="color:${c}">${v}</span>
+      </div>`).join('');
+      await ffd(100);
+      dims.forEach(([,,],i)=>{ const b=document.getElementById('ffsdb'+i); if(b) b.style.width=dims[i][1]+'%'; });
+      await ffd(900);
+      const peers=document.getElementById('ffs-peers'); if(!peers)return;
+      for(const[n,c] of [['Brazil','#4ade80'],['Indonesia','#60a5fa'],['South Africa','#fb923c'],['Turkey','#a78bfa']]){
+        await ffd(300);
+        peers.insertAdjacentHTML('beforeend',ffChip(n,c));
+      }
+    }
+  },
+  // ─── Scene 3: Policy Stance — Vote Similarity Network ───
+  { color:'#f5b942', label:'Policy Stance Agent · Vote Network',
+    render(){
+      const blocs=[['Western Bloc','#f26b38'],['Russia + Allies','#0f7b8c'],['China-Centered','#e3a008'],['Non-Aligned','#7fb7be']];
+      return `<div class="ffs">
+      <div class="ffs-ey">POLICY STANCE · VOTE SIMILARITY NETWORK · 1989–2025</div>
+      <div class="ffs-h1">Who votes with whom?</div>
+      <div class="ffs-desc">GNN embeds 185 countries in a vote-similarity space. Louvain community detection finds blocs from the data — no hand-coded labels. Edge weight = UN GA vote agreement rate.</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+        ${blocs.map(([n,c])=>`<span style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:${c}"><span style="width:8px;height:8px;border-radius:50%;background:${c};box-shadow:0 0 6px ${c};flex:none"></span>${n}</span>`).join('')}
+      </div>
+      <svg id="ffs-net" viewBox="0 0 460 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:210px;overflow:visible">
+        <defs><filter id="ffglow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+        <g id="ffs-edges" opacity="0" style="transition:opacity 1.1s"></g>
+        <g id="ffs-nodes"></g>
+      </svg>
+      <div class="ffs-stats" style="margin-top:2px">
+        <div class="ffs-stat"><div class="ffs-stat-n" style="color:#f5b942">185</div><div class="ffs-stat-l">countries</div></div>
+        <div class="ffs-stat"><div class="ffs-stat-n" style="color:#f5b942">4</div><div class="ffs-stat-l">detected blocs</div></div>
+        <div class="ffs-stat"><div class="ffs-stat-n" style="color:#f5b942">0.47</div><div class="ffs-stat-l">modularity Q</div></div>
+      </div>
+    </div>`; },
+    async animate(){
+      const N=[
+        ['USA',68,78,'#f26b38'],['GBR',112,48,'#f26b38'],['FRA',156,66,'#f26b38'],
+        ['DEU',158,106,'#f26b38'],['AUS',86,130,'#f26b38'],['JPN',48,156,'#f26b38'],['CAN',30,88,'#f26b38'],
+        ['RUS',330,60,'#0f7b8c'],['BLR',374,92,'#0f7b8c'],['IRN',306,110,'#0f7b8c'],
+        ['CHN',380,188,'#e3a008'],['IND',310,198,'#e3a008'],['PAK',346,154,'#e3a008'],
+        ['ZAF',392,210,'#e3a008'],['SAU',284,158,'#e3a008'],['BRA',158,195,'#e3a008'],
+        ['IDN',234,170,'#7fb7be'],['NGA',194,145,'#7fb7be'],['EGY',220,105,'#7fb7be'],['ARG',118,180,'#7fb7be'],
+      ];
+      const E=[
+        [0,1,'#f26b38'],[0,3,'#f26b38'],[0,6,'#f26b38'],[1,2,'#f26b38'],[2,3,'#f26b38'],[3,4,'#f26b38'],[1,5,'#f26b38'],[4,5,'#f26b38'],
+        [7,8,'#0f7b8c'],[7,9,'#0f7b8c'],
+        [10,11,'#e3a008'],[10,12,'#e3a008'],[10,13,'#e3a008'],[10,14,'#e3a008'],[11,12,'#e3a008'],[11,15,'#e3a008'],
+        [16,17,'#7fb7be'],[17,18,'#7fb7be'],[16,19,'#7fb7be'],
+        [7,10,'rgba(255,255,255,.18)'],[9,12,'rgba(255,255,255,.12)'],[11,7,'rgba(255,255,255,.12)'],
+      ];
+      const eg=document.getElementById('ffs-edges'), ng=document.getElementById('ffs-nodes');
+      if(!eg||!ng)return;
+      const sv=document.createElementNS.bind(document,'http://www.w3.org/2000/svg');
+      E.forEach(([a,b,col])=>{
+        const l=sv('line');
+        l.setAttribute('x1',N[a][1]);l.setAttribute('y1',N[a][2]);
+        l.setAttribute('x2',N[b][1]);l.setAttribute('y2',N[b][2]);
+        l.setAttribute('stroke',col);l.setAttribute('stroke-width','1');
+        eg.appendChild(l);
+      });
+      await ffd(400); eg.style.opacity='1'; await ffd(900);
+      for(const[name,x,y,col] of N){
+        const g=sv('g'); g.style.opacity='0'; g.style.transition='opacity .28s';
+        const c=sv('circle');
+        c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r','5.5');
+        c.setAttribute('fill',col);c.setAttribute('filter','url(#ffglow)');
+        const t=sv('text');
+        t.setAttribute('x',x);t.setAttribute('y',y+15);
+        t.setAttribute('text-anchor','middle');t.setAttribute('fill',col);
+        t.setAttribute('font-size','7');t.setAttribute('font-weight','700');
+        t.textContent=name;
+        g.appendChild(c);g.appendChild(t);ng.appendChild(g);
+        await ffd(50); g.style.opacity='1';
+      }
+    }
+  },
+  // ─── Scene 4: Policy Stance — Issue-Based Analysis ───
+  { color:'#f5b942', label:'Policy Stance Agent · Issue Analysis',
+    render(){
+      const tabs=['Dashboard','Network Graph','Country Comparison','Heatmaps','Temporal Analysis','Alliance Blocs','Policy Stance'];
+      return `<div class="ffs">
+      <div class="ffs-ey">CAPSTONE INTELLIGENCE PLATFORM</div>
+      <div class="ffs-h1" style="margin-bottom:8px">Issue-Based Stance Analysis</div>
+      <div class="ffs-tabs">${tabs.map((l,i)=>`<button class="ffs-tab${i===6?' act':''}" style="${i===6?'--ffc:#f5b942':''}">${l}</button>`).join('')}</div>
+      <div class="ffs-slabel">COUNTRIES</div>
+      <div class="ffs-box" id="ffs4-chips" style="margin-bottom:10px"></div>
+      <div class="ffs-slabel">ISSUES</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="ffs4-issues"></div>
+      <div id="ffs4-ai"></div>
+    </div>`; },
+    async animate(){
+      const ch=document.getElementById('ffs4-chips'); if(!ch)return;
+      for(const[n,c] of [['India','#4ade80'],['Pakistan','#fb923c'],['USA','#60a5fa'],['Russia','#f87171'],['China','#a78bfa']]){
+        await ffd(360); if(!document.getElementById('ffs4-chips'))return;
+        ch.insertAdjacentHTML('beforeend',ffChip(n,c));
+      }
+      const iss=document.getElementById('ffs4-issues'); if(!iss)return;
+      for(const[t,c] of [['Territory / Government','#f5b942'],['Human Rights','#f472b6'],['Resources / Economy','#34d399'],['Autonomy / Federalism','#60a5fa']]){
+        await ffd(280);
+        iss.insertAdjacentHTML('beforeend',`<span class="ffs-chip" style="border-color:${c}50;color:${c};background:${c}12">${t} ×</span>`);
+      }
+      await ffd(700);
+      const ai=document.getElementById('ffs4-ai'); if(!ai)return;
+      ai.innerHTML=`<div class="ffs-ai" style="border-color:rgba(245,185,66,.25)">
+        <div class="ffs-ai-hd"><span class="ffs-ai-badge">AI ANALYSIS · 5 COUNTRIES · 4 ISSUES</span></div>
+        <div style="display:grid;gap:7px;margin-bottom:10px" id="ffs4-rows"></div>
+        <div class="ffs-badges">
+          <span class="ffs-bdg">IND–PAK 79% vote match</span>
+          <span class="ffs-bdg">CHN–RUS same bloc</span>
+          <span class="ffs-bdg r">IND–PAK diverging −9.5pp</span>
+          <span class="ffs-bdg r">USA–CHN opposing blocs</span>
+        </div>
+      </div>`;
+      const rows=document.getElementById('ffs4-rows'); if(!rows)return;
+      for(const[pair,issue,text,col] of [
+        ['India × Pakistan','Territory / Gov','High conflict (63 events). Vote match 79% but diverging −9.5pp. Same China-Centered bloc.','#fb923c'],
+        ['USA × China','Resources / Economy','Opposing blocs. Low vote match (34%). Trade dependency creates compounding strategic tension.','#f87171'],
+        ['Russia × China','Autonomy / Fed','Strong alignment (91% vote match). Shared interest in multipolarity and sovereignty resolutions.','#4ade80'],
+        ['India × Russia','Human Rights','Non-Aligned movement legacy. Vote match 71%, stable. Diverging on conflict-related resolutions.','#60a5fa'],
+      ]){
+        await ffd(400);
+        rows.insertAdjacentHTML('beforeend',`<div style="padding:9px 12px;border-radius:9px;border-left:3px solid ${col};background:rgba(255,255,255,.03);animation:rise .3s ease both">
+          <div style="display:flex;gap:7px;align-items:center;margin-bottom:3px">
+            <span style="font-size:12px;font-weight:800;color:rgba(255,255,255,.85)">${pair}</span>
+            <span style="font-size:10px;padding:1px 7px;border-radius:4px;background:${col}20;color:${col};font-weight:700">${issue}</span>
+          </div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,.48);line-height:1.5">${text}</div>
+        </div>`);
+      }
+    }
+  },
+  // ─── Scene 5: Trade overview ───
+  { color:'#34d399', label:'Trade Intelligence Agent · Overview',
+    render(){return `<div class="ffs">
+      <div class="ffs-ey">TRADE INTELLIGENCE · BACI 1995–2024</div>
+      <div class="ffs-h1">Global Trade Network</div>
+      <div class="ffs-desc">226 economies. 29 years of bilateral flow data at HS2 sector level. The network graph maps structural dependencies across the entire global system.</div>
+      <div class="ffs-stats">
+        <div class="ffs-stat"><div class="ffs-stat-n" style="color:#34d399">226</div><div class="ffs-stat-l">economies covered</div></div>
+        <div class="ffs-stat"><div class="ffs-stat-n" style="color:#34d399">29yr</div><div class="ffs-stat-l">BACI 1995–2024</div></div>
+        <div class="ffs-stat"><div class="ffs-stat-n" style="color:#34d399">HS2</div><div class="ffs-stat-l">sector breakdown</div></div>
+      </div>
+      <div class="ffs-slabel">ANALYSE COUNTRY</div>
+      <div class="ffs-inp"><span id="ffs-tr-inp"></span><span class="ffs-cur" style="color:#34d399"></span></div>
+      <div id="ffs-tr-results"></div>
+    </div>`; },
+    async animate(){
+      await ffd(600);
+      await ffType('ffs-tr-inp','Germany',45);
+      await ffd(500);
+      const r=document.getElementById('ffs-tr-results'); if(!r)return;
+      r.innerHTML=`<div class="ffs-slabel" style="margin-top:4px">TOP CRITICAL TRADE PARTNERS</div><div class="ffs-deps" id="ffs-deps"></div>`;
+      const deps=document.getElementById('ffs-deps'); if(!deps)return;
+      const data=[['🇨🇳','China',14.2,0.71],['🇺🇸','USA',9.8,0.49],['🇫🇷','France',8.1,0.41],['🇵🇱','Poland',6.4,0.32],['🇳🇱','Netherlands',5.9,0.30]];
+      for(const[f,n,p,w] of data){
+        await ffd(380);
+        deps.insertAdjacentHTML('beforeend',`<div class="ffs-dep">
+          <span class="ffs-dep-flag">${f}</span>
+          <span class="ffs-dep-name">${n}</span>
+          <div class="ffs-dep-bw"><div class="ffs-dep-b" style="width:${w*100}%"></div></div>
+          <span class="ffs-dep-pct">${p}%</span>
+        </div>`);
+      }
+    }
+  },
+  // ─── Scene 6: Trade Germany shock ───
+  { color:'#34d399', label:'Trade Intelligence Agent · Shock Sim',
+    render(){return `<div class="ffs">
+      <div class="ffs-ey">TRADE INTELLIGENCE · SUPPLY FRAGILITY</div>
+      <div class="ffs-h1">Germany — Sector Fragility</div>
+      <div class="ffs-desc">Supply fragility by sector: how concentrated is Germany's import sourcing? A fragility score near 1.0 means a single partner dominates that sector.</div>
+      <div class="ffs-slabel">IMPORT FRAGILITY BY SECTOR</div>
+      <div class="ffs-shap" id="ffs-sec"></div>
+      <div style="margin-top:14px;padding:12px 14px;background:rgba(52,211,153,.05);border:1px solid rgba(52,211,153,.18);border-radius:10px">
+        <div class="ffs-slabel">SHOCK SIMULATION</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.45);margin-bottom:8px">Simulate a 30% supply disruption from China</div>
+        <div id="ffs-shock-result" style="font-size:12px;color:rgba(255,255,255,.3)">Running cascade through 226-node network…</div>
+      </div>
+    </div>`; },
+    async animate(){
+      const sectors=[['Energy',0.72,'#fb923c'],['Electronics',0.61,'#60a5fa'],['Agriculture',0.38,'#4ade80'],['Automotive',0.44,'#a78bfa'],['Chemicals',0.51,'#f472b6']];
+      const sec=document.getElementById('ffs-sec'); if(!sec)return;
+      sec.innerHTML=sectors.map(([n,v,c],i)=>`<div class="ffs-sdim">
+        <span class="ffs-sdname">${n}</span>
+        <div class="ffs-sdbarw"><div class="ffs-sdbar" id="ffss${i}" style="background:${c}"></div></div>
+        <span class="ffs-sdval" style="color:${c}">${v}</span>
+      </div>`).join('');
+      await ffd(100);
+      sectors.forEach(([,,],i)=>{ const b=document.getElementById('ffss'+i); if(b) b.style.width=(sectors[i][1]*100)+'%'; });
+      await ffd(1200);
+      const sr=document.getElementById('ffs-shock-result'); if(!sr)return;
+      sr.innerHTML=`<div style="color:#4ade80;font-weight:700">Cascade complete — 14 economies affected at ≥5% exposure:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">
+          ${['Poland','Czech Rep.','Netherlands','Austria','Italy','France','Belgium','Switzerland','Denmark','Sweden','Hungary','Romania','Slovakia','Ukraine'].map(n=>`<span style="padding:2px 8px;border-radius:5px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);font-size:11px;color:#f87171">${n}</span>`).join('')}
+        </div>`;
+    }
+  },
+  // ─── Scene 7: Events live feed ───
+  { color:'#f472b6', label:'Event Summarization Agent · Live',
+    render(){return `<div class="ffs">
+      <div class="ffs-ey">EVENT SUMMARIZATION · GDELT LIVE + GGE BASELINE</div>
+      <div class="ffs-h1">Live GDELT Feed</div>
+      <div class="ffs-desc">Every event scored on the Goldstein scale (−10 conflict → +10 cooperation). spaCy NER extracts actor pairs. The 30-year GGE baseline detects when today is statistically out of character.</div>
+      <div class="ffs-slabel">ANALYSE COUNTRY / BILATERAL PAIR</div>
+      <div class="ffs-inp"><span id="ffs-ev-inp"></span><span class="ffs-cur" style="color:#f472b6"></span></div>
+      <div id="ffs-ev-feed"></div>
+    </div>`; },
+    async animate(){
+      await ffd(600);
+      await ffType('ffs-ev-inp','Russia',45);
+      await ffd(500);
+      const feed=document.getElementById('ffs-ev-feed'); if(!feed)return;
+      feed.innerHTML=`<div class="ffs-slabel">TODAY'S EVENTS (GOLDSTEIN SCALE)</div><div class="ffs-evs" id="ffs-evlist"></div>`;
+      const evlist=document.getElementById('ffs-evlist'); if(!evlist)return;
+      const evs=[
+        ['n','RUS → UKR','−5.4','Demand halt of activities; impose restrictions'],
+        ['n','RUS → USA','−3.1','Express opposition; criticize or denounce'],
+        ['e','RUS → CHN','+0.8','Consult; discuss; negotiate'],
+        ['p','RUS → IND','+3.2','Provide military aid; weapons transfer'],
+        ['n','RUS → EU','−4.7','Issue ultimatum; threaten with sanctions'],
+        ['p','RUS → BLR','+6.1','Sign formal agreement; treaty'],
+      ];
+      for(const[t,pair,gs,desc] of evs){
+        await ffd(360);
+        evlist.insertAdjacentHTML('beforeend',`<div class="ffs-ev ${t}">
+          <span class="ffs-gs">${gs}</span>
+          <div class="ffs-evb"><div class="ffs-evpair">${pair}</div><div class="ffs-evdesc">${desc}</div></div>
+        </div>`);
+      }
+    }
+  },
+  // ─── Scene 8: Events Russia baseline deviation ───
+  { color:'#f472b6', label:'Event Summarization Agent · Baseline',
+    render(){return `<div class="ffs">
+      <div class="ffs-ey">EVENT SUMMARIZATION · BASELINE DEVIATION</div>
+      <div class="ffs-h1">Russia — Today vs 30-Year Baseline</div>
+      <div class="ffs-desc">The GGE historical baseline (1990–2024) gives a 30-year average Goldstein score for every bilateral pair. Today's GDELT score is compared against it to flag statistically unusual days.</div>
+      <div class="ffs-evs" id="ffs-bev"></div>
+      <div id="ffs-bline"></div>
+    </div>`; },
+    async animate(){
+      const bev=document.getElementById('ffs-bev'); if(!bev)return;
+      const rows=[
+        ['n','RUS–UKR','Today: −5.4','Baseline: +0.6','−6.0 deviation'],
+        ['n','RUS–USA','Today: −3.1','Baseline: −1.4','−1.7 deviation'],
+        ['e','RUS–CHN','Today: +1.2','Baseline: +1.9','−0.7 deviation'],
+      ];
+      for(const[t,pair,today,base,dev] of rows){
+        await ffd(400);
+        bev.insertAdjacentHTML('beforeend',`<div class="ffs-ev ${t}">
+          <div class="ffs-evb">
+            <div class="ffs-evpair" style="font-size:12px;font-weight:700;color:rgba(255,255,255,.75)">${pair}</div>
+            <div style="display:flex;gap:12px;margin-top:4px">
+              <span style="font-size:12px;color:${t==='n'?'#f87171':'rgba(255,255,255,.5)'};font-weight:700">${today}</span>
+              <span style="font-size:12px;color:rgba(255,255,255,.35)">${base}</span>
+              <span style="font-size:12px;color:${t==='n'?'#f87171':'rgba(255,255,255,.35)'};font-weight:700">${dev}</span>
+            </div>
+          </div>
+        </div>`);
+      }
+      await ffd(700);
+      const bl=document.getElementById('ffs-bline'); if(!bl)return;
+      bl.innerHTML=`<div class="ffs-baseline">
+        <div class="ffs-bl-l"><strong style="color:rgba(255,255,255,.8)">Russia–Ukraine bilateral</strong><br>Today's tone is 6.0 Goldstein points below the 30-year GGE average. This triggers an event-friction finding in the fusion engine when crossed with Ukraine's trade exposure to Russia.</div>
+        <div>
+          <div class="ffs-bl-s">−5.4</div>
+          <div class="ffs-bl-ref">baseline +0.6</div>
+        </div>
+        <div class="ffs-dev-flag">⚠ Statistically anomalous</div>
+      </div>`;
+    }
+  },
+];
+
+let ffSceneIdx = -1, ffAnimToken = 0;
+
+function ffBuildTracks() {
+  const t=document.getElementById('ff-track'); if(!t)return;
+  t.innerHTML=FF_SCENES.map((_,i)=>`<div class="ff-tk" id="fftk${i}"></div>`).join('');
+}
+function ffUpdateTracks(idx){
+  FF_SCENES.forEach((_,i)=>{
+    const el=document.getElementById('fftk'+i); if(!el)return;
+    el.className='ff-tk'+(i<idx?' done':i===idx?' active':'');
+  });
+}
+function ffColor(col){
+  document.getElementById('ff-bg').style.setProperty('--ffc',col);
+  const d=document.getElementById('ff-dot'); if(d){d.style.background=col;d.style.boxShadow=`0 0 8px ${col}`;}
+}
+
+function startFunFlow(){
+  ffSceneIdx=-1; ffBuildTracks();
+  document.getElementById('ff-bg').classList.add('open');
+  document.getElementById('ff-pbtn').disabled=true;
+  document.getElementById('ff-nbtn').textContent='Start →';
+  document.getElementById('ff-label').textContent='Fun Flow';
+  ffColor('#a78bfa');
+  const c=document.getElementById('ff-content'); c.className='ff-splash';
+  c.innerHTML=`<h2>Four agents. One tour.</h2>
+    <p>Watch all four dashboards come alive — with live tab switching, typing, and results — across 8 scripted scenes.</p>
+    <p style="font-size:12px;opacity:.35">8 scenes · step through with the buttons above</p>`;
+  world.controls().autoRotate=false;
+}
+function closeFunFlow(){
+  document.getElementById('ff-bg').classList.remove('open');
+  world.controls().autoRotate=true;
+}
+function ffNext(){
+  ffSceneIdx++;
+  if(ffSceneIdx>=FF_SCENES.length){showFFEnd();return;}
+  ffRenderScene(ffSceneIdx);
+}
+function ffPrev(){
+  if(ffSceneIdx<=0)return;
+  ffSceneIdx--;
+  ffRenderScene(ffSceneIdx);
+}
+function ffRenderScene(idx){
+  const scene=FF_SCENES[idx];
+  ffUpdateTracks(idx);
+  ffColor(scene.color);
+  document.getElementById('ff-label').textContent=scene.label;
+  document.getElementById('ff-pbtn').disabled=(idx===0);
+  document.getElementById('ff-nbtn').textContent=(idx===FF_SCENES.length-1)?'Finish ✦':'Next →';
+  const c=document.getElementById('ff-content'); c.className='';
+  c.style.cssText='flex:1;overflow-y:auto;overflow-x:hidden;';
+  c.innerHTML=scene.render();
+  const token=++ffAnimToken;
+  scene.animate().catch(()=>{});
+}
+function showFFEnd(){
+  ffUpdateTracks(FF_SCENES.length);
+  document.getElementById('ff-label').textContent='Tour complete';
+  document.getElementById('ff-nbtn').textContent='Done';
+  document.getElementById('ff-nbtn').onclick=closeFunFlow;
+  const c=document.getElementById('ff-content'); c.className='ff-splash';
+  c.innerHTML=`<h2>Four agents. One system.</h2>
+    <p>You just watched all four agents run on real-world data — Soft Power, Policy Stance, Trade Intelligence and Events — each with its own models, its own datasets, its own output.<br>Now ask them a live question together.</p>
+    <div class="ff-slinks">
+      <a class="ff-sl a" href="/features">Explore agents</a>
+      <a class="ff-sl b" href="/engine">Ask the engine</a>
+      <a class="ff-sl a" href="/brochure">How it works</a>
+    </div>`;
+}
+</script>
+
+<!-- World Leaders floating avatars -->
+<script>
+(function(){
+  const LEADERS = [
+    { name:'Donald Trump',   country:'🇺🇸 USA',      delay:0.2,  x:'3%',  y:'22%', hue:'#f97316',
+      img:'https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Official_Presidential_Portrait_of_President_Donald_J._Trump_%282025%29.jpg/250px-Official_Presidential_Portrait_of_President_Donald_J._Trump_%282025%29.jpg' },
+    { name:'Emmanuel Macron',country:'🇫🇷 France',   delay:0.5,  x:'30%', y:'13%', hue:'#818cf8',
+      img:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Emmanuel_Macron_2025_%28cropped%29.jpg/330px-Emmanuel_Macron_2025_%28cropped%29.jpg' },
+    { name:'Vladimir Putin', country:'🇷🇺 Russia',   delay:0.9,  x:'66%', y:'13%', hue:'#60a5fa',
+      img:'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Vladimir_Putin_%282026_02_23%29_%28cropped%29.jpg/330px-Vladimir_Putin_%282026_02_23%29_%28cropped%29.jpg' },
+    { name:'Recep Erdoğan',  country:'🇹🇷 Türkiye',  delay:1.3,  x:'88%', y:'22%', hue:'#fb923c',
+      img:'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Turkish_President_Recep_Tayyip_Erdo%C4%9Fan_in_January_2024_%28cropped%29.jpg/330px-Turkish_President_Recep_Tayyip_Erdo%C4%9Fan_in_January_2024_%28cropped%29.jpg' },
+    { name:'Xi Jinping',     country:'🇨🇳 China',    delay:1.6,  x:'88%', y:'58%', hue:'#f87171',
+      img:'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Prime_Minister_Keir_Starmer_visits_China_%2855066713683%29_%28cropped%2Bangle%29.jpg/330px-Prime_Minister_Keir_Starmer_visits_China_%2855066713683%29_%28cropped%2Bangle%29.jpg' },
+    { name:'Narendra Modi',  country:'🇮🇳 India',    delay:2.0,  x:'72%', y:'76%', hue:'#f59e0b',
+      img:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/The_official_portrait_of_Shri_Narendra_Modi%2C_the_Prime_Minister_of_the_Republic_of_India.jpg/330px-The_official_portrait_of_Shri_Narendra_Modi%2C_the_Prime_Minister_of_the_Republic_of_India.jpg' },
+    { name:'Luiz Lula',      country:'🇧🇷 Brazil',   delay:2.3,  x:'26%', y:'76%', hue:'#4ade80',
+      img:'https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Foto_oficial_de_Luiz_In%C3%A1cio_Lula_da_Silva_%28mais_estreita%29.jpg/330px-Foto_oficial_de_Luiz_In%C3%A1cio_Lula_da_Silva_%28mais_estreita%29.jpg' },
+    { name:'Olaf Scholz',    country:'🇩🇪 Germany',  delay:2.6,  x:'3%',  y:'58%', hue:'#34d399',
+      img:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Olaf_Scholz_September_2024.jpg/330px-Olaf_Scholz_September_2024.jpg' },
+  ];
+
+  const layer = document.getElementById('leaders-layer');
+  if (!layer) return;
+
+  LEADERS.forEach((l, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'wl';
+    wrap.style.cssText = `left:${l.x};top:${l.y};animation-delay:${l.delay}s,${l.delay}s;animation-duration:.7s,${5+i*0.4}s;`;
+
+    const face = document.createElement('div');
+    face.className = 'wl-face';
+    face.style.cssText = `box-shadow:0 8px 24px rgba(0,0,0,.55),0 0 0 2px ${l.hue}66;`;
+    const img = document.createElement('img');
+    img.src = l.img;
+    img.alt = l.name;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center top;';
+    face.appendChild(img);
+
+    const name = document.createElement('div');
+    name.className = 'wl-name';
+    name.textContent = l.name;
+
+    const country = document.createElement('div');
+    country.className = 'wl-country';
+    country.textContent = l.country;
+
+    wrap.append(face, name, country);
+    layer.appendChild(wrap);
+  });
 })();
 </script>
 </body>

@@ -66,7 +66,21 @@
   .rv-item p { margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
   .rv-item .more { background: none; border: 0; color: #5cc8ff; cursor: pointer; padding: 4px 0 0; font: 13px ${FONT}; }
   .rv-empty { color: #a7b1c2; font-size: 14px; padding: 8px 4px; }
-  .rv-empty a { color: #5cc8ff; cursor: pointer; }`;
+  .rv-empty a { color: #5cc8ff; cursor: pointer; }
+  .rv-founder-btn { border: 0; border-radius: 10px; padding: 10px 18px; font: 700 13px ${FONT}; cursor: pointer; color: #e6ebf3; background: linear-gradient(135deg, rgba(91,33,182,.7), rgba(219,39,119,.7)); border: 1px solid rgba(167,139,250,.4); }
+  .rv-founder-btn:hover { background: linear-gradient(135deg, rgba(91,33,182,.9), rgba(219,39,119,.9)); }
+  .rv-pin-dialog { border: 1px solid #2a3850; border-radius: 14px; padding: 0; width: min(360px, 92vw); background: #0f1622; color: #e6ebf3; font-family: ${FONT}; }
+  .rv-pin-dialog::backdrop { background: rgba(3,6,12,.78); backdrop-filter: blur(4px); }
+  .rv-pin-form { padding: 22px 22px 18px; display: grid; gap: 14px; }
+  .rv-pin-form h3 { margin: 0; font-size: 17px; }
+  .rv-pin-form p { margin: 0; color: #a7b1c2; font-size: 13px; }
+  .rv-pin-input { font: 15px ${FONT}; color: #e6ebf3; background: #0b111b; border: 1px solid #2a3850; border-radius: 10px; padding: 10px 12px; width: 100%; box-sizing: border-box; letter-spacing: 2px; }
+  .rv-pin-input:focus { outline: none; border-color: #a78bfa; }
+  .rv-pin-err { color: #f87171; font-size: 13px; min-height: 18px; }
+  .rv-pin-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .rv-item.founder-only { border-color: rgba(167,139,250,.35); background: rgba(91,33,182,.08); }
+  .rv-item .suggestions { margin-top: 8px; padding-top: 8px; border-top: 1px solid #1f2a3c; color: #a7b1c2; font-size: 13px; font-style: italic; }
+  .rv-item .hidden-badge { display: inline-block; background: rgba(248,113,113,.15); border: 1px solid rgba(248,113,113,.4); color: #f87171; border-radius: 6px; font-size: 11px; padding: 1px 7px; margin-left: 6px; vertical-align: middle; }`;
   const style = document.createElement("style");
   style.textContent = css;
   document.head.append(style);
@@ -87,7 +101,10 @@
   const stat = make("div", { class: "rv-stat" });
   intro.append(stat);
   const open = make("button", { class: "rv-btn", type: "button" }, "★ Post a review");
-  card.append(intro, open);
+  const founderBtn = make("button", { class: "rv-founder-btn", type: "button", title: "Founder access: view all reviews" }, "🔑 Founder");
+  const btnGroup = make("div", { style: "display:flex;gap:10px;align-items:center;flex-wrap:wrap;" });
+  btnGroup.append(open, founderBtn);
+  card.append(intro, btnGroup);
   wrap.append(card);
 
   const dialog = make("dialog", { class: "rv-dialog" });
@@ -212,6 +229,83 @@
     } catch { /* reviews are a nicety; the page works without them */ }
   }
 
-  const mount = () => { (document.querySelector("main") || document.body).append(wrap); document.body.append(dialog, corner); refresh(); };
+  // ------------------------------------------------------- Founder Pin
+  const pinDialog = make("dialog", { class: "rv-pin-dialog" });
+  const pinForm = make("form", { class: "rv-pin-form", method: "dialog", novalidate: "" });
+  const pinErr = make("div", { class: "rv-pin-err" });
+  const pinInput = make("input", { class: "rv-pin-input", type: "password", placeholder: "Enter founder pin", autocomplete: "off", maxlength: "30" });
+  const pinCancel = make("button", { type: "button", class: "rv-ghost" }, "Cancel");
+  const pinSubmit = make("button", { type: "submit", class: "rv-btn" }, "Unlock");
+  const pinActions = make("div", { class: "rv-pin-actions" });
+  pinActions.append(pinCancel, pinSubmit);
+  pinForm.append(make("h3", {}, "🔑 Founder Access"), make("p", {}, "Enter the founder pin to view all reviews, including private ones."), pinInput, pinErr, pinActions);
+  pinDialog.append(pinForm);
+  pinCancel.addEventListener("click", () => { pinDialog.close(); pinErr.textContent = ""; pinInput.value = ""; });
+
+  function founderItem(r) {
+    const node = make("article", { class: `rv-item${r.hidden ? " founder-only" : ""}` });
+    const top = make("div", { class: "top" });
+    const nameEl = make("span", { class: "who" }, r.name || "Anonymous");
+    if (r.hidden) nameEl.append(make("span", { class: "hidden-badge" }, "hidden"));
+    top.append(nameEl, make("span", { class: "when" }, `${(r.created_at || "").slice(0, 10)} · ${r.page === "features" ? "Features" : "Engine"}`));
+    const starLine = make("div", { class: "stars" }, "★".repeat(r.rating));
+    starLine.append(make("span", {}, "★".repeat(5 - r.rating)));
+    const all = r.review || "", cut = all.split(/\s+/).slice(0, 60).join(" ");
+    const text = make("p", {}, cut.length < all.length ? `${cut}…` : (all || "(no review text)"));
+    node.append(top, starLine, text);
+    if (cut.length < all.length) {
+      const more = make("button", { class: "more", type: "button" }, "Read more");
+      more.addEventListener("click", () => { const full = text.textContent === all; text.textContent = full ? `${cut}…` : all; more.textContent = full ? "Read more" : "Show less"; });
+      node.append(more);
+    }
+    if (r.suggestions && r.suggestions.trim()) {
+      const sug = make("div", { class: "suggestions" });
+      sug.append(make("b", {}, "Suggestion: "), document.createTextNode(r.suggestions));
+      node.append(sug);
+    }
+    return node;
+  }
+
+  async function loadFounderReviews(pin) {
+    const res = await fetch(`/reviews/all?pin=${encodeURIComponent(pin)}`);
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || "Invalid pin.");
+    return (await res.json()).reviews || [];
+  }
+
+  function showFounderPanel(allRevs) {
+    const header = panel.querySelector("header h4");
+    if (header) header.textContent = "🔑 All reviews (Founder view)";
+    subtitle.textContent = `${allRevs.length} total review${allRevs.length === 1 ? "" : "s"} · includes private and short ones`;
+    const sorted = [...allRevs].reverse();
+    if (sorted.length) {
+      list.replaceChildren(...sorted.map(founderItem));
+    } else {
+      list.replaceChildren(make("div", { class: "rv-empty" }, "No reviews yet."));
+    }
+    badge.textContent = String(allRevs.length);
+    setOpen(true);
+  }
+
+  pinForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    pinErr.textContent = "";
+    pinSubmit.disabled = true;
+    pinSubmit.textContent = "Checking…";
+    try {
+      const allRevs = await loadFounderReviews(pinInput.value);
+      pinDialog.close();
+      pinInput.value = "";
+      showFounderPanel(allRevs);
+    } catch (err) {
+      pinErr.textContent = err.message;
+    } finally {
+      pinSubmit.disabled = false;
+      pinSubmit.textContent = "Unlock";
+    }
+  });
+
+  founderBtn.addEventListener("click", () => { pinErr.textContent = ""; pinInput.value = ""; pinDialog.showModal(); setTimeout(() => pinInput.focus(), 50); });
+
+  const mount = () => { (document.querySelector("main") || document.body).append(wrap); document.body.append(dialog, pinDialog, corner); refresh(); };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount); else mount();
 })();

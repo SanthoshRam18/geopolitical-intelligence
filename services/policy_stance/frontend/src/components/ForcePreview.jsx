@@ -69,7 +69,7 @@ export default function ForcePreview({ graph, height = 340, onNodeClick, blocMap
   const onEngineStop = useCallback(() => {
     if (fittedRef.current) return;
     fittedRef.current = true;
-    fgRef.current?.zoomToFit?.(600, 40);
+    fgRef.current?.zoomToFit?.(600, 150);
   }, []);
 
   // Node/link color — pure functions, no state deps → no re-render
