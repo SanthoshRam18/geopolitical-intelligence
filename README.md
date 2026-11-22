@@ -58,17 +58,15 @@ so it answers on a fresh clone. **docs/DATA.md** lists what each service needs a
 where to get it. Any agent without its data still starts, and the briefing
 says what is missing.
 
-Each module's own dashboard still works. `scripts\run_dashboards.ps1` starts
-all four, pointed at the platform ports, which is what the "Open module
-dashboard" links in the briefing UI expect. See the list below.
+Each module's own dashboard is live at:
 
-| Service | API | Own dashboard |
-|---|---|---|
-| Orchestrator + briefing UI | :8000 | http://127.0.0.1:8000 |
-| Soft Power | :8101 | http://localhost:5174 |
-| Policy Stance | :8102 | http://localhost:5175 |
-| Trade | :8103 | http://localhost:8080/?api=http://127.0.0.1:8103 |
-| Events | :8104 | http://localhost:5176 |
+| Service | Live URL |
+|---|---|
+| Orchestrator + briefing UI | https://65.1.109.59.sslip.io |
+| Soft Power | https://softpower.65.1.109.59.sslip.io |
+| Policy Stance | https://policystance.65.1.109.59.sslip.io |
+| Trade Intelligence | https://trade.65.1.109.59.sslip.io |
+| Event Summarization | https://events.65.1.109.59.sslip.io |
 
 ## What a question goes through
 
