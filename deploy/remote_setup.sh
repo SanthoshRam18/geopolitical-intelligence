@@ -63,17 +63,91 @@ else
   AUTH_BLOCK=$(printf '\tbasic_auth {\n\t\t%s %s\n\t}' "$AUTH_USER" "$AUTH_HASH")
   echo "serving $SITE for user $AUTH_USER"
 fi
-cat > "$APP/deploy/Caddyfile" <<EOF
+
+# Each module dashboard gets its own host under the site's: softpower.<site> and so
+# on. sslip.io resolves those by itself; a custom domain needs DNS records for them,
+# and a bare IP (plain-HTTP deploys) has no subdomains, so it gets no dashboards.
+SCHEME="https://"; PREFIX=""; HOST="$SITE"
+case "$SITE" in http://*) SCHEME="http://"; PREFIX="http://"; HOST="${SITE#http://}" ;; esac
+if echo "$HOST" | grep -qE '^[0-9.]+$'; then DASHBOARDS=0; else DASHBOARDS=1; fi
+{
+  cat <<EOF
 $SITE {
 	encode gzip
 $AUTH_BLOCK
 	reverse_proxy orchestrator:8000
 }
 EOF
+  if [ "$DASHBOARDS" -eq 1 ]; then
+    # The React dashboards call their agent through /api on their own host.
+    for pair in softpower:soft_power policystance:policy_stance events:event_summarization; do
+      name="${pair%%:*}"; agent="${pair#*:}"
+      cat <<EOF
+
+${PREFIX}${name}.${HOST} {
+	encode gzip
+$AUTH_BLOCK
+	handle_path /api/* {
+		reverse_proxy ${agent}:8000
+	}
+	handle {
+		root * /srv/${name}
+		try_files {path} /index.html
+		file_server
+	}
+}
+EOF
+    done
+    # Trade's page takes its agent's origin as ?api= and calls it at the root, so the
+    # page and the agent share this host: the page at /, everything else to the agent.
+    cat <<EOF
+
+${PREFIX}trade.${HOST} {
+	encode gzip
+$AUTH_BLOCK
+	@bare {
+		path /
+		not query api=*
+	}
+	redir @bare /?api=${SCHEME}trade.${HOST} 302
+	@page path / /index.html
+	handle @page {
+		root * /srv/trade
+		rewrite * /index.html
+		file_server
+	}
+	handle {
+		reverse_proxy trade_intelligence:8000
+	}
+}
+EOF
+  fi
+} > "$APP/deploy/Caddyfile.new"
+
+# The briefing UI links to each dashboard; compose reads these from .env. Other
+# settings someone put in the server's .env (GEMINI_API_KEY) are kept.
+touch "$APP/.env"
+sed -i '/_DASHBOARD_URL=/d' "$APP/.env"
+if [ "$DASHBOARDS" -eq 1 ]; then
+  cat >> "$APP/.env" <<EOF
+SOFT_POWER_DASHBOARD_URL=${SCHEME}softpower.${HOST}
+POLICY_STANCE_DASHBOARD_URL=${SCHEME}policystance.${HOST}
+EVENTS_DASHBOARD_URL=${SCHEME}events.${HOST}
+TRADE_DASHBOARD_URL=${SCHEME}trade.${HOST}/?api=${SCHEME}trade.${HOST}
+EOF
+else
+  echo "no module dashboards: $HOST is an IP address, which has no subdomains"
+fi
 
 echo "== 6/6 Build and start (the first build takes 10-20 minutes)"
 cd "$APP"
-"${COMPOSE[@]}" up -d --build --remove-orphans
+"${COMPOSE[@]}" build
+# Check the new Caddyfile before it replaces the current one, then copy it over in
+# place: Caddy's container mounts that very file, so its inode must not change.
+"${COMPOSE[@]}" run --rm --no-deps -T -v "$APP/deploy/Caddyfile.new:/tmp/Caddyfile.new:ro" caddy   caddy validate --config /tmp/Caddyfile.new --adapter caddyfile
+cat "$APP/deploy/Caddyfile.new" > "$APP/deploy/Caddyfile"
+rm -f "$APP/deploy/Caddyfile.new"
+"${COMPOSE[@]}" up -d --remove-orphans
 # Caddy reads its config only when it starts, and compose does not recreate it when
 # just the mounted Caddyfile changed; restart it so a new login or access mode applies.
 "${COMPOSE[@]}" restart caddy
@@ -89,4 +163,7 @@ for i in $(seq 1 120); do
   fi
   sleep 15
 done
-echo "DONE: https://${SITE#http://}  (or ${SITE} if you chose plain HTTP)"
+echo "DONE: ${SCHEME}${HOST}"
+if [ "$DASHBOARDS" -eq 1 ]; then
+  for name in softpower policystance events trade; do echo "  dashboard: ${SCHEME}${name}.${HOST}"; done
+fi

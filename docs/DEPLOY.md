@@ -89,14 +89,27 @@ Run these on the server (`ssh -i key.pem ubuntu@<ip>`, then `cd ~/team128`):
 | Stop everything | `sudo docker compose -f docker-compose.prod.yml down` |
 | Change the login | run `set_password.ps1` again, then deploy with `-SkipData` |
 | Switch between login and open access | deploy with `-SkipData`, adding `-Public` for open access |
+| Read visitor reviews | on your laptop: `scripts\get_reviews.ps1 -Server ubuntu@<ip> -Key <key.pem>` saves them to `reviews.csv` |
 
 The containers restart automatically after a crash or a VM reboot.
 
 ## Notes
 
-- The module dashboards (the React apps) are not deployed, and the drill-through
-  links are hidden in production. The briefing UI covers every agent.
+- Each module's own dashboard is served on its own host next to the briefing UI:
+  `softpower.`, `policystance.`, `events.` and `trade.` in front of the site
+  address (e.g. `https://softpower.203.0.113.10.sslip.io`), and the briefing UI's
+  "Open module dashboard" links point there. They are built into the Caddy image
+  (`deploy/web.Dockerfile`) and call their agent through `/api` on their own host.
+  sslip.io resolves these names by itself; with your own domain, add DNS records
+  for them too. A plain-HTTP deploy on a bare IP (`-Site http://<ip>`) has no
+  subdomains, so it skips the dashboards.
 - Events downloads each new GDELT day from `data.gdeltproject.org`, so the server
   needs outbound internet. It keeps the last five days.
 - `GEMINI_API_KEY` is only used by the Events module's optional article
   verification, which the orchestrator does not call.
+- The site has three pages: `/` (home, the two ways in), `/features` (the four
+  module dashboards) and `/engine` (the GEOINT Engine run console). Both second
+  pages have a "Post a review" button; reviews (rating, review, suggestions,
+  optional name) are stored by the orchestrator in SQLite on the
+  `orchestrator_data` volume, so they survive redeploys. The site shows only
+  their count and average; read them with `scripts/get_reviews.ps1`.

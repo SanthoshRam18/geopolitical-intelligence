@@ -28,3 +28,6 @@ orchestrator/tests/fixtures/*.tmp
 # Deployment secrets and generated config
 deploy/.auth
 deploy/Caddyfile
+
+# Visitor reviews stored by a local orchestrator (app/reviews.py)
+orchestrator/data/
