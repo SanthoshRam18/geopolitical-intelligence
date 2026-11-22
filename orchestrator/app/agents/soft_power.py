@@ -124,7 +124,7 @@ class SoftPowerAdapter(AgentAdapter):
             ]
 
         want_forecast = plan.intent in ("country_profile", "forecast")
-        want_peers = plan.intent in ("country_profile", "blocs")
+        want_peers = plan.intent in ("country_profile", "blocs", "vote_alignment")
         y_end = plan.time.year if plan.time.mode == "year" else (row.get("year") or 2024)
         calls = [
             try_call(self.get("/api/timeseries", params={"iso3": iso3, "yStart": max(2000, y_end - 10), "yEnd": y_end}), {}),
@@ -191,7 +191,8 @@ class SoftPowerAdapter(AgentAdapter):
                     delta / 100.0,
                     0.8 if abs(delta) > 2 else 0.65,
                     f"{len(series)} annual Kalman-smoothed observations; small moves sit inside year-to-year noise" if abs(delta) <= 2 else f"{len(series)} annual Kalman-smoothed observations",
-                    {"direction": direction, "delta": round(delta, 2), "from_year": first["year"], "to_year": last["year"], "momentum_5y": row.get("momentum_5y"), "trend_slope": row.get("trend_slope")},
+                    {"direction": direction, "delta": round(delta, 2), "from_year": first["year"], "to_year": last["year"], "momentum_5y": row.get("momentum_5y"), "trend_slope": row.get("trend_slope"),
+                     "series": [{"year": p["year"], "score": round(p["score"], 2), "rank": p.get("rank")} for p in series]},
                     facet="influence_trend",
                 )
             )

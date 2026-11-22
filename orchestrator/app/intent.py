@@ -32,7 +32,7 @@ from typing import Iterable, Optional
 from . import countries, reformulate
 from .config import REFORMULATION_STEPS
 
-INTENTS = ("country_profile", "bilateral", "shock", "forecast", "blocs", "events", "ranking")
+INTENTS = ("country_profile", "bilateral", "shock", "forecast", "blocs", "events", "ranking", "event_history", "vote_alignment")
 ALL_AGENTS = ("soft_power", "policy_stance", "trade_intelligence", "event_summarization")
 
 _SHOCK = re.compile(
@@ -45,6 +45,48 @@ _BLOCS = re.compile(r"\b(blocs?|alliances?|allied|aligned|alignment|camps?|non-a
 _EVENTS = re.compile(r"\b(today|yesterday|news|headlines?|happening|this week|latest events|recent events|events)\b", re.I)
 _RANKING = re.compile(r"\b(which countries|what countries|who are|top \d+|most|least|rank(?:ed|ing)?|leading|largest|biggest)\b", re.I)
 _BILATERAL = re.compile(r"\b(relations?|relationship|ties|between|versus|vs\.?|compare[ds]?|comparison|bilateral|dependence on|depend on)\b", re.I)
+
+# "Which day / when ... most conflictual ... in the last five years": a search of the
+# day-by-day GDELT history for the extreme days, not a profile of the country.
+_HISTORY_WHEN = re.compile(r"\b(?:which|what) (?:day|date|days|dates|week|weeks|month|months)\b|\bwhen (?:did|was|were|has|had|have)\b|"
+                           r"\bon what (?:day|date)\b|\b(?:days?|dates?) (?:when|on which|where|with)\b", re.I)
+_HISTORY_EXTREME = re.compile(r"\b(most|worst|highest|lowest|biggest|peak|maximum|minimum|very|extremely|horrible|terrible|awful|severe|bad|best|least|calmest)\b", re.I)
+_CONFLICTUAL = re.compile(r"\b(conflict\w*|hostil\w*|violen\w*|tense|tensions?|negative|aggress\w*|clash\w*|attacks?|fight\w*|horrible|terrible|awful|"
+                          r"worst|severe|bad|turbulent|unrest|crisis|crises)\b", re.I)
+_COOPERATIVE = re.compile(r"\b(cooperat\w*|co-operat\w*|friendl\w*|positive|peaceful|calm\w*|best|warmest|cordial)\b", re.I)
+_HISTORY_MEASURE = re.compile(r"\b(goldstein|scores?|tone)\b", re.I)
+_NUMBER_WORDS = {"a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8,
+                 "nine": 9, "ten": 10, "eleven": 11, "twelve": 12, "fifteen": 15, "twenty": 20, "thirty": 30}
+_RELATIVE_RANGE = re.compile(r"\b(?:last|past|previous|preceding|recent)\s+(\d{1,4}|a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty)?\s*"
+                             r"(day|week|month|year)s?\b", re.I)
+_SINCE_YEAR = re.compile(r"\bsince (19\d{2}|20\d{2})\b", re.I)
+_BETWEEN_YEARS = re.compile(r"\b(?:between|from) (19\d{2}|20\d{2}) (?:and|to|until|-) (19\d{2}|20\d{2})\b", re.I)
+_IN_YEAR = re.compile(r"\b(?:in|during|throughout|of) (19\d{2}|20\d{2})\b", re.I)
+HISTORY_DAYS = 1830   # the Events day-by-day history covers the last five years (its HISTORY_DAYS)
+DEFAULT_HISTORY_DAYS = 365
+
+# "Which country agrees most with Iran on human rights": a ranking of every country
+# by how often it voted like Iran in the UN General Assembly, on that topic.
+_AGREEMENT = re.compile(r"\b(agree\w*|agreement|disagree\w*|vot(?:e|es|ed|ing)\s+(?:(?:most|more|mostly|the\s+most|least)\s+)?(?:with|like|alongside|against|the same)|voting partners?|"
+                        r"sides?\s+with|sided\s+with|align\w*\s+with|stands?\s+with|in line with|closest\s+(?:to|ally|allies|partner)|allies\s+on)\b", re.I)
+_TOPIC_PHRASE = re.compile(r"\b(?:on|about|over|regarding|concerning|when it comes to|in terms of|for)\s+(?:the\s+)?(?:issues?\s+of\s+|questions?\s+of\s+|topics?\s+of\s+|matter\s+of\s+)?"
+                           r"([a-z][a-z' \-]{2,40}?)\s*(?=$|[?.,;]|\b(?:at|in)\s+the\s+un\b|\bat\s+un\b|\bsince\b|\bbetween\b|\bfrom\b|\bduring\b|\bin\s+(?:19|20)\d\d|"
+                           r"\bresolutions?\b|\bvotes?\b|\bissues?\b|\bmatters?\b|\bquestions?\b|\bin the (?:last|past))", re.I)
+# A topic as said -> the terms the UN vote topics and titles use ("|" = any of them).
+_TOPIC_TERMS = {
+    "human rights": "human rights", "rights": "human rights", "nuclear": "nuclear", "nukes": "nuclear", "nuclear weapons": "nuclear",
+    "disarmament": "disarmament", "weapons": "weapons|arms|disarmament", "arms": "arms|weapons", "israel": "israel", "palestine": "palestin",
+    "palestinians": "palestin", "gaza": "palestin|israel", "middle east": "middle east", "women": "women", "gender": "women",
+    "climate": "climate|environment|sustainable", "climate change": "climate|environment|sustainable", "environment": "environment|sustainable|climate",
+    "colonialism": "decoloni|self-determination|non-self-governing", "decolonization": "decoloni", "racism": "racial|apartheid",
+    "refugees": "refugee", "terrorism": "terroris", "sanctions": "sanctions", "ukraine": "ukraine", "russia": "russia|ukraine",
+    "space": "outer space", "outer space": "outer space", "development": "development", "trade": "trade", "cuba": "cuba",
+    "self-determination": "self-determination", "death penalty": "capital punishment", "capital punishment": "capital punishment",
+    "children": "child", "democracy": "democracy", "chemical weapons": "chemical", "landmines": "landmines|mines",
+}
+_VOTE_WORDS = re.compile(r"\b(agree\w*|agreement|disagree\w*|vot(?:e|es|ed|ing)|un votes?|at the un|in the un|general assembly)\b", re.I)
+_BLOC_WORDS = re.compile(r"\b(blocs?|alliances?|camps?|coalitions?|non-aligned)\b", re.I)
+_TOPIC_NOISE = re.compile(r"\b(the|un|united nations|general assembly|ga|issues?|matters?|questions?|topics?|policy|policies)\b", re.I)
 
 _DOMAIN = {
     "trade_intelligence": re.compile(r"\b(trade|trading|exports?|imports?|supply|suppliers?|tariffs?|economic|economy|dependen\w*|leverage|fragil\w*|sectors?)\b", re.I),
@@ -69,10 +111,13 @@ class Entity:
 
 @dataclass
 class TimeWindow:
-    mode: str = "latest"          # latest | year | date
+    mode: str = "latest"          # latest | year | date | range
     year: Optional[int] = None
     date: Optional[str] = None    # YYYYMMDD
     horizon_year: Optional[int] = None
+    start: Optional[str] = None   # YYYYMMDD, for a range
+    end: Optional[str] = None     # YYYYMMDD, for a range
+    label: Optional[str] = None   # the range as asked: "the last 5 years"
 
 
 @dataclass
@@ -86,9 +131,16 @@ class QueryPlan:
     metric: str = "exports"
     limit: int = 5
     trade_query: Optional[str] = None
+    direction: Optional[str] = None      # event_history: "conflict" or "cooperation"
+    topic: Optional[str] = None          # vote_alignment: the topic as said ("human rights")
+    topic_terms: Optional[str] = None    # vote_alignment: '|'-separated terms matched in UN vote topics
     agents: list[str] = field(default_factory=list)
     agent_reasons: dict[str, str] = field(default_factory=dict)
     focus_agents: list[str] = field(default_factory=list)
+    # The engaged agents, most relevant to this question first (_rank_agents).
+    agent_order: list[str] = field(default_factory=list)
+    agent_relevance: dict[str, float] = field(default_factory=dict)
+    lead_reason: Optional[str] = None
     notes: list[str] = field(default_factory=list)
     read_as: Optional[str] = None        # the reformulated question, when it differs
     rewrites: list[dict] = field(default_factory=list)
@@ -133,6 +185,107 @@ def _parse_time(question: str, intent_hint: str) -> TimeWindow:
     return TimeWindow(mode="latest")
 
 
+def _parse_range(question: str, history: bool = True) -> tuple[TimeWindow, bool]:
+    """A date range for a history search, and whether the question gave one.
+
+    "the last 5 years", "past 6 months", "since 2022", "between 2019 and 2021",
+    "in 2023", "this year", "last year". Without one: the last year. The range
+    ends yesterday (GDELT publishes a day after it) and starts no earlier than
+    GDELT's first daily export. ``history=False`` (UN votes, which go back to 1946)
+    skips the Events history's five-year limit."""
+    yesterday = _today() - timedelta(days=1)
+    first_day = yesterday - timedelta(days=HISTORY_DAYS - 1) if history else date(1946, 1, 1)
+
+    def window(start: date, end: date, label: str) -> TimeWindow:
+        end = min(end, yesterday)
+        if start < first_day:
+            label = f"{label} (the history covers the last 5 years)" if history else label
+        start = max(start, first_day)
+        if start > end:
+            start = end
+        return TimeWindow(mode="range", start=start.strftime("%Y%m%d"), end=end.strftime("%Y%m%d"), label=label)
+
+    match = _BETWEEN_YEARS.search(question)
+    if match:
+        a, b = sorted((int(match.group(1)), int(match.group(2))))
+        return window(date(a, 1, 1), date(b, 12, 31), f"{a}-{b}"), True
+    match = _SINCE_YEAR.search(question)
+    if match:
+        year = int(match.group(1))
+        return window(date(year, 1, 1), yesterday, f"since {year}"), True
+    match = _RELATIVE_RANGE.search(question)
+    if match:
+        raw, unit = (match.group(1) or "").lower(), match.group(2).lower()
+        # Bare "last year" is the previous calendar year; "the last year" and
+        # "the past year" are the last twelve months.
+        if not raw and unit == "year" and re.search(r"(?<!the )\blast year\b", question, re.I):
+            previous = yesterday.year - 1
+            return window(date(previous, 1, 1), date(previous, 12, 31), str(previous)), True
+        n = int(raw) if raw.isdigit() else _NUMBER_WORDS.get(raw, 1)
+        days = {"day": 1, "week": 7, "month": 30, "year": 365}[unit] * max(1, n)
+        label = f"the last {unit}" if n == 1 else f"the last {n} {unit}s"
+        return window(yesterday - timedelta(days=days - 1), yesterday, label), True
+    if re.search(r"\bthis year\b", question, re.I):
+        return window(date(yesterday.year, 1, 1), yesterday, "this year"), True
+    if re.search(r"\bthis month\b", question, re.I):
+        return window(yesterday.replace(day=1), yesterday, "this month"), True
+    match = _IN_YEAR.search(question)
+    if match:
+        year = int(match.group(1))
+        return window(date(year, 1, 1), date(year, 12, 31), str(year)), True
+    return window(yesterday - timedelta(days=DEFAULT_HISTORY_DAYS - 1), yesterday, "the last year"), False
+
+
+def _is_history_question(question: str, entities: list[Entity]) -> bool:
+    """A search across days for the extreme ones, rather than a profile."""
+    if not entities:
+        return False
+    if not (_CONFLICTUAL.search(question) or _COOPERATIVE.search(question) or _HISTORY_MEASURE.search(question)):
+        return False
+    if _HISTORY_WHEN.search(question):
+        return True
+    has_range = bool(_RELATIVE_RANGE.search(question) or _SINCE_YEAR.search(question) or _BETWEEN_YEARS.search(question))
+    names_a_day = re.search(r"\b(days?|dates?|weeks?|months?)\b", question, re.I)
+    return bool(_HISTORY_EXTREME.search(question) and (has_range or names_a_day))
+
+
+def _is_vote_alignment(question: str, entities: list[Entity]) -> bool:
+    """Who votes like a country at the UN (optionally on a topic).
+
+    "Agree" and "vote with" always mean UN votes. "Side with" and "aligned with"
+    mean them only when a topic is named and no bloc is: "who does Vietnam side
+    with?" asks for its bloc."""
+    if not entities or _SHOCK.search(question) or not _AGREEMENT.search(question):
+        return False
+    if _VOTE_WORDS.search(question):
+        return True
+    return not _BLOC_WORDS.search(question) and _vote_topic(question, entities)[0] is not None
+
+
+def _vote_topic(question: str, entities: list[Entity]) -> tuple[Optional[str], Optional[str]]:
+    """(the topic as said, the terms to match in UN vote topics) or (None, None) for all votes."""
+    # The first country is the one whose votes are compared; another country named
+    # after "on" is the topic ("votes with Russia on Ukraine").
+    subject = {entities[0].name.lower(), entities[0].matched.lower()} if entities else set()
+    for match in _TOPIC_PHRASE.finditer(question):
+        phrase = _TOPIC_NOISE.sub(" ", match.group(1).lower())
+        phrase = re.sub(r"\s+", " ", phrase).strip(" -'")
+        if not phrase or phrase in subject or len(phrase) < 3:
+            continue
+        terms = _TOPIC_TERMS.get(phrase) or next((v for k, v in _TOPIC_TERMS.items() if re.search(rf"\b{re.escape(k)}\b", phrase)), None)
+        return phrase, terms or phrase
+    return None, None
+
+
+def _direction(question: str) -> str:
+    """Whether a history search wants the most conflictual or the most cooperative days."""
+    if re.search(r"\b(?:least|lowest) (?:conflict\w*|hostil\w*|tense|violen\w*|negative)", question, re.I):
+        return "cooperation"
+    if _COOPERATIVE.search(question) and not _CONFLICTUAL.search(question):
+        return "cooperation"
+    return "conflict"
+
+
 def _severity(question: str) -> float:
     pct = re.search(r"(\d{1,3}(?:\.\d+)?)\s*(?:%|percent)", question, re.I)
     if pct:
@@ -163,6 +316,10 @@ def _trade_ranking_query(question: str) -> str:
 
 def _choose_intent(question: str, entities: list[Entity]) -> str:
     n = len(entities)
+    if _is_history_question(question, entities):
+        return "event_history"
+    if _is_vote_alignment(question, entities):
+        return "vote_alignment"
     if n >= 1 and _SHOCK.search(question):
         return "shock"
     if n >= 1 and _FORECAST.search(question):
@@ -211,12 +368,70 @@ _INTENT_AGENTS = {
         "policy_stance": "bloc context for the counterparts",
         "trade_intelligence": "trade stakes with the counterparts",
     },
+    "event_history": {
+        # Events answers the question; the others add what the days alone cannot show.
+        "event_summarization": "search the day-by-day GDELT history for the extreme days and events",
+        "policy_stance": "conflict record (UCDP) and UN-voting bloc, as context for those days",
+        "soft_power": "how its influence moved over the same years",
+        "trade_intelligence": "trade exposure and dependence: the economic stakes",
+    },
+    "vote_alignment": {
+        # Policy Stance answers; the others add what the votes alone cannot show.
+        "policy_stance": "compare every country's UN General Assembly votes with the target's, on the topic asked",
+        "soft_power": "how its closest profiles compare in influence",
+        "trade_intelligence": "trade ties and dependence: whether votes follow trade",
+        "event_summarization": "what the news shows about it right now",
+    },
     "ranking": {
         "trade_intelligence": "network-wide ranking",
         "soft_power": "global soft-power leaderboard",
         "policy_stance": "alliance-bloc overview",
     },
 }
+
+
+# The agent whose own data a kind of question is about, and why. Intents left out
+# (country_profile, bilateral, forecast) have no single owner: the wording decides.
+_INTENT_OWNER = {
+    "event_history": ("event_summarization", "it holds the day-by-day history the question asks about"),
+    "events": ("event_summarization", "it tracks what is happening day by day"),
+    "shock": ("trade_intelligence", "it propagates the disruption through the trade graph"),
+    "ranking": ("trade_intelligence", "it ranks every economy in its network"),
+    "blocs": ("policy_stance", "it places countries in UN-voting blocs"),
+    "vote_alignment": ("policy_stance", "it holds every UN General Assembly vote, by topic"),
+}
+_FIELD_NAME = {"trade_intelligence": "trade", "soft_power": "influence", "policy_stance": "diplomacy and conflict", "event_summarization": "news events"}
+
+
+def _rank_agents(intent: str, text: str, time: TimeWindow, agents: list[str]) -> tuple[dict[str, float], list[str], Optional[str]]:
+    """Score how relevant each engaged agent is to this question, most relevant first.
+
+    3 for the agent that owns this kind of question, 2 per word naming an agent's
+    field (at most two counted), 1 when the time asked matches the agent's grain
+    (a day or a range of days: Events; a year: the annual agents). Ties keep the
+    usual agent order."""
+    scores = {agent: 0.0 for agent in agents}
+    reasons: dict[str, str] = {}
+    owner = _INTENT_OWNER.get(intent)
+    if owner and owner[0] in scores:
+        scores[owner[0]] += 3
+        reasons[owner[0]] = owner[1]
+    for agent, pattern in _DOMAIN.items():
+        if agent in scores:
+            words = {m.strip().lower() for m in pattern.findall(text)}
+            if words:
+                scores[agent] += 2 * min(2, len(words))
+                reasons.setdefault(agent, f"the question is about {_FIELD_NAME[agent]} ({', '.join(sorted(words)[:3])})")
+    if time.mode in ("date", "range") and "event_summarization" in scores:
+        scores["event_summarization"] += 1
+    elif time.mode == "year":
+        for agent in scores:
+            if agent != "event_summarization":
+                scores[agent] += 0.5
+    order = sorted(agents, key=lambda a: -scores[a])  # stable: ties keep ALL_AGENTS order
+    lead = order[0] if order else None
+    lead_reason = reasons.get(lead) if lead and scores[lead] > 0 else None
+    return scores, order, lead_reason
 
 
 _COUNTRY_REWRITES = ("capital", "endonym", "abbreviation", "combining_form", "country_spelling")
@@ -266,12 +481,27 @@ def parse(question: str, overrides: Optional[dict] = None, steps: Optional[Itera
     if intent not in INTENTS:
         intent = "country_profile" if entities else "ranking"
 
-    time = _parse_time(text, intent)
+    range_given = False
+    if intent == "event_history":
+        time, range_given = _parse_range(text)
+    elif intent == "vote_alignment":
+        span, given = _parse_range(text, history=False)
+        time = span if given else TimeWindow(mode="latest")
+    else:
+        time = _parse_time(text, intent)
     if overrides.get("year"):
-        time = TimeWindow(mode="year", year=int(overrides["year"]))
+        year = int(overrides["year"])
+        if intent == "event_history":
+            yesterday = (_today() - timedelta(days=1)).strftime("%Y%m%d")
+            time = TimeWindow(mode="range", start=f"{year}0101", end=min(f"{year}1231", yesterday), label=str(year))
+        else:
+            time = TimeWindow(mode="year", year=year)
     if overrides.get("date"):
         day = str(overrides["date"]).replace("-", "")
-        time = TimeWindow(mode="date", date=day, year=int(day[:4]))
+        if intent == "event_history":
+            time = TimeWindow(mode="range", start=day, end=day, label=f"{day[:4]}-{day[4:6]}-{day[6:]}")
+        else:
+            time = TimeWindow(mode="date", date=day, year=int(day[:4]))
 
     limit_match = re.search(r"\btop (\d{1,2})\b", text, re.I)
     plan = QueryPlan(
@@ -284,6 +514,16 @@ def parse(question: str, overrides: Optional[dict] = None, steps: Optional[Itera
         metric="imports" if re.search(r"\bimports?\b", text, re.I) else "exports",
         limit=max(1, min(20, int(limit_match.group(1)))) if limit_match else (10 if intent == "ranking" else 5),
     )
+    if intent == "event_history":
+        plan.direction = _direction(text)
+        if not range_given and not overrides.get("year") and not overrides.get("date"):
+            plan.notes.append("No time range given; searching the last year of daily GDELT history.")
+        if len(entities) >= 2:
+            plan.notes.append(f"The history is indexed per country, so this searches {entities[0].name}'s days with all counterparts, not only those with {entities[1].name}.")
+    if intent == "vote_alignment":
+        plan.topic, plan.topic_terms = _vote_topic(text, entities)
+        if not plan.topic:
+            plan.notes.append("No topic recognised; comparing every UN General Assembly vote.")
     if intent == "ranking":
         plan.trade_query = _trade_ranking_query(text)
     elif intent == "blocs":
@@ -315,6 +555,7 @@ def parse(question: str, overrides: Optional[dict] = None, steps: Optional[Itera
 
     plan.agents = chosen
     plan.agent_reasons = {agent: candidates[agent] for agent in chosen}
+    plan.agent_relevance, plan.agent_order, plan.lead_reason = _rank_agents(intent, text, time, chosen)
 
     if not entities and intent not in ("ranking", "blocs"):
         plan.notes.append("No country recognised in the question; answering with a global overview.")

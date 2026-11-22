@@ -24,3 +24,10 @@ orchestrator/tests/fixtures/*.tmp
 
 # Machine-specific editor/preview config
 .claude/
+
+# Deployment secrets and generated config
+deploy/.auth
+deploy/Caddyfile
+
+# Visitor reviews stored by a local orchestrator (app/reviews.py)
+orchestrator/data/

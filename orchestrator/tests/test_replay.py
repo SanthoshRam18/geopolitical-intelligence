@@ -1,6 +1,7 @@
 """The whole pipeline against real agent responses recorded from the live services."""
 
 import asyncio
+import json
 
 import httpx
 import pytest
@@ -144,6 +145,32 @@ def test_ask_endpoint(client):
     assert body["briefing"]["headline"].startswith("India and China")
 
 
+def test_run_endpoint_streams_plan_then_each_agent_then_the_same_fusion_as_ask(client):
+    body = {"question": "India and China relations", "date": "2026-09-22"}
+    response = client.post("/run", json=body)
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/x-ndjson")
+    events = [json.loads(line) for line in response.text.splitlines() if line.strip()]
+    kinds = [event["type"] for event in events]
+    assert kinds[0] == "plan" and kinds[-1] == "fusion"
+    plan = events[0]["plan"]
+    agent_events = [event for event in events if event["type"] == "agent"]
+    assert sorted(event["agent"] for event in agent_events) == sorted(plan["agents"])
+    assert all(event["result"]["status"] == "ok" for event in agent_events)
+    # Every logged call says what it was made with, for the run console.
+    trade = next(event["result"] for event in agent_events if event["agent"] == "trade_intelligence")
+    assert all(call["request"] and call["request"].get("query_type") for call in trade["calls"])
+
+    asked = client.post("/ask", json=body).json()
+    assert events[-1]["briefing"]["headline"] == asked["briefing"]["headline"]
+    assert events[-1]["briefing"]["summary"] == asked["briefing"]["summary"]
+    assert events[-1]["fused"]["stats"] == asked["fused"]["stats"]
+
+
+def test_run_endpoint_validates_like_ask(client):
+    assert client.post("/run", json={"question": "India", "yr": 2020}).status_code == 422
+
+
 def test_ask_rejects_unknown_fields_and_bad_values(client):
     assert client.post("/ask", json={"question": "India", "yr": 2020}).status_code == 422
     assert client.post("/ask", json={"question": "India", "date": "22/09/2026"}).status_code == 422
@@ -159,6 +186,14 @@ def test_parse_endpoint_does_not_call_agents_beyond_alignment(client):
 
 
 def test_ui_is_served(client):
-    response = client.get("/")
-    assert response.status_code == 200
-    assert "Geopolitical Briefing" in response.text
+    home = client.get("/")
+    assert home.status_code == 200
+    assert 'href="/features"' in home.text and 'href="/engine"' in home.text   # the two ways in
+    features = client.get("/features")
+    assert features.status_code == 200 and 'data-page="features"' in features.text
+    engine = client.get("/engine")
+    assert engine.status_code == 200
+    assert "GEOINT Engine" in engine.text
+    assert 'fetch("/run"' in engine.text  # the run console streams from /run
+    assert 'data-page="engine"' in engine.text
+    assert all(r.headers["cache-control"] == "no-cache" for r in (home, features, engine))

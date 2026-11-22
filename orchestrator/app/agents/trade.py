@@ -93,6 +93,10 @@ class TradeAdapter(AgentAdapter):
             for iso3 in plan.iso3s[:2]:
                 jobs.append(("blocs", {**base, "query_type": "blocs", "country": iso3}))
                 jobs.append(("leverage", {**base, "query_type": "leverage", "country": iso3}))
+        elif plan.intent in ("event_history", "vote_alignment") and plan.primary:
+            # Context for a search of past days: how exposed the country is, and to whom.
+            jobs.append(("risk", {**base, "query_type": "risk", "country": plan.primary}))
+            jobs.append(("leverage", {**base, "query_type": "leverage", "country": plan.primary}))
         elif plan.intent == "events" and plan.primary:
             jobs.append(("leverage", {**base, "query_type": "leverage", "country": plan.primary}))
         else:  # country_profile

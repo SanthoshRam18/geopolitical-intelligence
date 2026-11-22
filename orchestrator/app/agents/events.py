@@ -90,6 +90,19 @@ def _tone(goldstein: float) -> str:
     return "conflictual"
 
 
+def _day(value: Optional[str]) -> str:
+    text = str(value or "")
+    return f"{text[:4]}-{text[4:6]}-{text[6:]}" if len(text) == 8 else text
+
+
+def _event_line(event: dict) -> str:
+    """'Actor - Event type - Actor (Goldstein -10, 25 articles)'."""
+    g = event.get("goldstein")
+    n = event.get("num_articles")
+    stats = ", ".join(x for x in (f"Goldstein {g:+.0f}" if isinstance(g, (int, float)) else None, f"{n} articles" if n else None) if x)
+    return f"{event.get('actor1') or '?'} - {event.get('event_type') or 'event'} - {event.get('actor2') or '?'}" + (f" ({stats})" if stats else "")
+
+
 def _volume_confidence(n: int) -> float:
     # More events make the day's aggregate steadier, but GDELT's coding noise
     # caps how far that goes.
@@ -207,6 +220,8 @@ class EventsAdapter(AgentAdapter):
             return [], {"query_type": plan.intent, "time_grain": "daily"}
 
         iso3 = plan.primary
+        if plan.intent == "event_history":
+            return await self._history(plan, result)
         if plan.time.mode == "year":
             # A past year has no "today": answer from the annual GGE series only.
             return await self._historical_year(plan, result)
@@ -357,6 +372,89 @@ class EventsAdapter(AgentAdapter):
                     facet="bilateral_events",
                 )
             )
+        return insights, metadata
+
+    async def _history(self, plan: QueryPlan, result: AgentResult) -> tuple[list[dict], dict]:
+        """Which days in a range were the most conflictual (or cooperative) for a
+        country, from the module's day-by-day index of GDELT exports."""
+        iso3 = plan.primary
+        name = countries.name_of(iso3)
+        start, end = plan.time.start, plan.time.end
+        direction = plan.direction or "conflict"
+        superlative = "most cooperative" if direction == "cooperation" else "most conflictual"
+        window = f"{plan.time.label or 'the range'} ({_day(start)} to {_day(end)})"
+        metadata: dict = {
+            "query_type": "event_history", "time_grain": "daily", "direction": direction,
+            "window": {"start": start, "end": end, "label": plan.time.label},
+            "method": "Day-by-day index of GDELT V1 daily exports: each day's events for the country (as Actor1 or Actor2), ranked by mean Goldstein score",
+        }
+        try:
+            payload = await self.get("/history/extremes", params={
+                "country_code": countries.to_cameo(iso3), "start": start, "end": end, "direction": direction, "limit": max(3, min(10, plan.limit or 5))})
+        except AgentCallError as exc:
+            if exc.status_code == 404:
+                self.mark_last_call_handled()
+                result.notes.append("This Events service has no day-by-day history index (it predates the /history endpoints).")
+                return [], metadata
+            raise
+
+        coverage = payload.get("coverage") or {}
+        searchable = max(1, int(coverage.get("days_in_range") or 0) - int(coverage.get("days_missing_upstream") or 0))
+        indexed = int(coverage.get("days_indexed") or 0)
+        fraction = min(1.0, indexed / searchable)
+        metadata["data_quality"] = {"days_in_range": coverage.get("days_in_range"), "days_indexed": indexed, "coverage": round(fraction, 3)}
+        caveat = None
+        if fraction < 0.999:
+            caveat = (f"The day-by-day index covers {indexed:,} of {searchable:,} days in this range so far"
+                      + (f" ({_day(coverage.get('first'))} to {_day(coverage.get('last'))})" if coverage.get("first") else "")
+                      + "; it is still being built in the background, newest days first, so earlier days were not searched.")
+            result.notes.append(caveat)
+        if coverage.get("before_daily_files"):
+            result.notes.append("Before April 2013 GDELT drew on far fewer news sources, so older days have far fewer events and no source links. "
+                                "Days are ranked by their average score, and each is judged against its own year's typical volume.")
+        days = payload.get("days") or []
+        baseline = payload.get("baseline") or {}
+        if not days:
+            if not indexed:
+                result.notes.append(f"No days between {_day(start)} and {_day(end)} are indexed yet.")
+            else:
+                result.notes.append(f"GDELT has no events for {name} between {_day(start)} and {_day(end)}.")
+            return [], metadata
+
+        # One confidence for the whole ranking: how steady a day's mean is at this
+        # country's usual volume, scaled down while the index is incomplete.
+        confidence = round(_volume_confidence(int(baseline.get("events_per_day") or 0)) * (0.5 + 0.5 * fraction), 3)
+        reason = f"ranked among {baseline.get('days_with_events', len(days))} days with events, counting only days with at least {payload.get('min_events')} events; GDELT codes events automatically"
+        insights: list[dict] = []
+        for rank, day in enumerate(days, start=1):
+            g, share = day.get("avg_goldstein") or 0.0, day.get("conflict_share") or 0.0
+            lead = (f"{name}'s {superlative} day in {window} was {_day(day['date'])}: its {day['events']:,} GDELT events averaged Goldstein {g:+.2f} ({_tone(g)}), "
+                    f"{share:.0%} of them conflictual." if rank == 1 else
+                    f"#{rank} {superlative} day: {_day(day['date'])}, Goldstein {g:+.2f} across {day['events']:,} events ({share:.0%} conflictual).")
+            top = (day.get("top_events") or [None])[0]
+            if top:
+                lead += f" {'Most severe' if direction == 'conflict' else 'Most cooperative'} event that day: {_event_line(top)}."
+            insights.append(insight(iso3, lead, g / 10.0, confidence, reason,
+                                    {**day, "rank": rank, "window": metadata["window"], "baseline_goldstein": baseline.get("avg_goldstein"), "url": (top or {}).get("url")},
+                                    facet="event_extreme_day", caveat=caveat))
+
+        severe = payload.get("severe_events") or []
+        if severe:
+            label = "most severe" if direction == "conflict" else "most cooperative"
+            claim = f"The {label} single events for {name} in {window}: " + "; ".join(f"{_day(e['date'])} {_event_line(e)}" for e in severe[:3]) + "."
+            insights.append(insight(iso3, claim, (severe[0].get("goldstein") or 0) / 10.0, 0.35,
+                                    "one event each, as GDELT coded it, not checked against the article",
+                                    {"events": severe, "window": metadata["window"]}, facet="event_extreme_events",
+                                    caveat="GDELT codes events from news text automatically; a single extreme event can be mis-coded (a fire crew 'fighting' a blaze, a sports 'attack'). Open the sources before relying on one."))
+
+        if baseline:
+            g = baseline.get("avg_goldstein") or 0.0
+            claim = (f"Across {window}, {name} averaged Goldstein {g:+.2f} ({_tone(g)}) over {baseline.get('events_per_day') or 0:,.0f} GDELT events a day, "
+                     f"{(baseline.get('conflict_share') or 0):.0%} of them conflictual ({baseline.get('days_with_events', 0):,} days with events).")
+            insights.append(insight(iso3, claim, g / 10.0, round(0.6 * (0.5 + 0.5 * fraction), 3), "the mean of every indexed day in the range, weighted by events",
+                                    {**baseline, "series": payload.get("series") or [], "series_period": payload.get("series_period"),
+                                     "coverage": coverage, "min_events": payload.get("min_events"), "window": metadata["window"]},
+                                    facet="event_history_baseline", caveat=caveat))
         return insights, metadata
 
     def _day_insights(self, iso3: str, day: str, payload: dict, result: AgentResult) -> list[dict]:

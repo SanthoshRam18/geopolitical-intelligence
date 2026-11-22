@@ -52,7 +52,7 @@ PRIMARY_FACETS = {
 
 # Facets where one agent legitimately makes several claims about the same entity
 # (one per affected economy, one per headline event), so dedupe keys on the claim.
-CLAIM_KEYED_FACETS = (None, "shock_impact", "event_headline")
+CLAIM_KEYED_FACETS = (None, "shock_impact", "event_headline", "event_extreme_day")
 
 PROVENANCE_CAVEAT = {
     "override_replaced": "Policy Stance publishes a hard-coded UN bloc for {name}; this finding uses the module's own vote-model placement instead, which comes from the full 1989-2025 voting history rather than the aligned year.",

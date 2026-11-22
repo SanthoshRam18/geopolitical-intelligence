@@ -17,7 +17,7 @@ from __future__ import annotations
 import asyncio
 import time
 from datetime import datetime, timezone
-from typing import Optional
+from typing import AsyncIterator, Optional
 
 import httpx
 
@@ -134,17 +134,47 @@ class Orchestrator:
         results_list = await asyncio.gather(*(self._run_agent(name, plan, context) for name in plan.agents))
         results = {result.agent: result for result in results_list}
 
-        alignment["served"] = _served(results)
-        fused = fusion.fuse(plan, results)
-        brief = briefing.compose(plan, fused, results, alignment)
-
         return {
             "question": question,
             "plan": plan.to_dict(),
+            **self._conclude(plan, alignment, results, started),
+            "agents": {name: result.to_dict(include_envelope=include_envelopes) for name, result in results.items()},
+        }
+
+    async def run_stream(self, question: str, overrides: Optional[dict] = None) -> AsyncIterator[dict]:
+        """``ask`` as a sequence of events, for the run console: the plan, then each
+        agent's result as soon as it lands, then the fusion. Agents still run in
+        parallel; only the reporting is incremental."""
+        started = time.perf_counter()
+        plan = intent.parse(question, overrides)
+        alignment = await self.align_time(plan)
+        context = {"aligned_year": alignment["aligned_year"]}
+        yield {"type": "plan", "question": question, "plan": plan.to_dict(), "time_alignment": alignment}
+
+        tasks = [asyncio.ensure_future(self._run_agent(name, plan, context)) for name in plan.agents]
+        landed: dict[str, AgentResult] = {}
+        try:
+            for next_done in asyncio.as_completed(tasks):
+                result = await next_done
+                landed[result.agent] = result
+                yield {"type": "agent", "agent": result.agent, "result": result.to_dict(include_envelope=True)}
+        finally:
+            # The client went away mid-run: stop the agents still working for it.
+            for task in tasks:
+                task.cancel()
+
+        # Fuse in plan order, exactly as ask() does.
+        results = {name: landed[name] for name in plan.agents if name in landed}
+        yield {"type": "fusion", **self._conclude(plan, alignment, results, started)}
+
+    def _conclude(self, plan: intent.QueryPlan, alignment: dict, results: dict[str, AgentResult], started: float) -> dict:
+        alignment["served"] = _served(results)
+        fused = fusion.fuse(plan, results)
+        brief = briefing.compose(plan, fused, results, alignment)
+        return {
             "time_alignment": alignment,
             "briefing": brief,
             "fused": fused,
-            "agents": {name: result.to_dict(include_envelope=include_envelopes) for name, result in results.items()},
             "latency_ms": round((time.perf_counter() - started) * 1000, 1),
             "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         }

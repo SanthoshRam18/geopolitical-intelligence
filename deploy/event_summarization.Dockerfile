@@ -1,10 +1,11 @@
-# Build context: ./services/event_summarization
+# Build context: ./services/event_summarization   (additional context "deploy" = ./deploy)
 # ffmpeg is only needed for the optional /briefing video; install it if you use that.
 FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
+COPY --from=deploy constraints.txt /tmp/constraints.txt
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
+RUN pip install --no-cache-dir -r requirements.txt -c /tmp/constraints.txt \
  && python -m spacy download en_core_web_sm
 COPY src/ ./src/
 RUN mkdir -p data media/briefings

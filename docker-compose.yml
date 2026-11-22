@@ -8,11 +8,11 @@
 
 services:
   soft_power:
-    build: { context: ./services/soft_power, dockerfile: ../../deploy/soft_power.Dockerfile }
+    build: { context: ./services/soft_power, dockerfile: ../../deploy/soft_power.Dockerfile, additional_contexts: { deploy: ./deploy } }
     ports: ["8101:8000"]
 
   policy_stance:
-    build: { context: ./services/policy_stance, dockerfile: ../../deploy/policy_stance.Dockerfile }
+    build: { context: ./services/policy_stance, dockerfile: ../../deploy/policy_stance.Dockerfile, additional_contexts: { deploy: ./deploy } }
     ports: ["8102:8000"]
     volumes:
       - ./services/policy_stance/data:/app/data:ro
@@ -27,7 +27,7 @@ services:
       - ./services/trade_intelligence/cache:/app/cache:ro
 
   event_summarization:
-    build: { context: ./services/event_summarization, dockerfile: ../../deploy/event_summarization.Dockerfile }
+    build: { context: ./services/event_summarization, dockerfile: ../../deploy/event_summarization.Dockerfile, additional_contexts: { deploy: ./deploy } }
     environment:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     ports: ["8104:8000"]
@@ -35,7 +35,7 @@ services:
       - ./services/event_summarization/data:/app/data
 
   orchestrator:
-    build: { context: ./orchestrator, dockerfile: ../deploy/orchestrator.Dockerfile }
+    build: { context: ./orchestrator, dockerfile: ../deploy/orchestrator.Dockerfile, additional_contexts: { deploy: ./deploy } }
     environment:
       SOFT_POWER_URL: http://soft_power:8000
       POLICY_STANCE_URL: http://policy_stance:8000

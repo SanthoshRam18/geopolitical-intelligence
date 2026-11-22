@@ -987,6 +987,85 @@ def topics() -> list[dict[str, Any]]:
     return [{'topic': topic, 'count': int(count)} for topic, count in counts.items()]
 
 
+def topic_agreement_payload(votes_df: pd.DataFrame, country: str, topic: str = '', start_year: int = 1946, end_year: int = 2100,
+                            limit: int = 10, min_shared: int = 10, compare: tuple[str, ...] = ()) -> dict[str, Any]:
+    """Which countries vote most, and least, like ``country`` in the UN General
+    Assembly, on the resolutions whose topic or title contains any of the
+    '|'-separated terms in ``topic`` (every resolution when it is empty).
+
+    Two countries agree on a resolution when they cast the same vote (yes, no or
+    abstain); absences are left out. A country is ranked only when it voted on
+    enough of the same resolutions: ``min_shared`` (half of them when the topic has
+    fewer resolutions than that), and at least a quarter of them."""
+    names = [n for n in votes_df['country_name'].dropna().unique()]
+    wanted = country.strip().lower()
+    match = next((n for n in names if n.lower() == wanted), None) or next((n for n in names if wanted in n.lower()), None)
+    if not match:
+        raise HTTPException(status_code=404, detail=f'No UN General Assembly votes for {country}')
+    sub = votes_df[(votes_df['year'] >= start_year) & (votes_df['year'] <= end_year) & votes_df['vote_numeric'].notna()]
+    terms = [t.strip() for t in (topic or '').split('|') if t.strip()]
+    if terms:
+        mask = pd.Series(False, index=sub.index)
+        for term in terms:
+            mask |= sub['topic'].astype(str).str.contains(term, case=False, regex=False, na=False)
+            mask |= sub['title'].astype(str).str.contains(term, case=False, regex=False, na=False)
+        sub = sub[mask]
+    mine = sub[sub['country_name'] == match][['year', 'resolution', 'vote_numeric', 'topic']]
+    base = {'country': match, 'topic': topic, 'terms': terms, 'start_year': start_year, 'end_year': end_year,
+            'method': 'share of shared UN General Assembly resolutions with the same vote (yes, no or abstain); absences excluded'}
+    if mine.empty:
+        return {**base, 'resolutions': 0, 'most_aligned': [], 'least_aligned': [], 'pairs': [], 'own_votes': {}, 'top_topics': [], 'countries_compared': 0}
+
+    reference = mine[['year', 'resolution', 'vote_numeric']].rename(columns={'vote_numeric': 'ref'})
+    pairs = sub[sub['country_name'] != match][['country_name', 'year', 'resolution', 'vote_numeric']].merge(reference, on=['year', 'resolution'])
+    pairs['same'] = pairs['vote_numeric'] == pairs['ref']
+    pairs['opposed'] = (pairs['vote_numeric'] * pairs['ref']) == -1   # one yes, the other no
+    every = pairs.groupby('country_name').agg(shared=('same', 'size'), agree=('same', 'sum'), opposed=('opposed', 'sum'))
+    every['agreement'] = every['agree'] / every['shared']
+    # Enough shared votes to rank: min_shared (or half the resolutions when there are
+    # fewer), and at least a quarter of them, so a state that voted for only a few
+    # sessions (East Germany, South Yemen) cannot top the list on a handful of votes.
+    floor = max(1, min(min_shared, len(mine) // 2), len(mine) // 4)
+    grouped = every[every['shared'] >= floor]
+
+    def rows(frame: pd.DataFrame) -> list[dict[str, Any]]:
+        return [{'country': name, 'agreement': round(float(r.agreement), 4), 'shared': int(r.shared), 'opposed': int(r.opposed)}
+                for name, r in frame.iterrows()]
+
+    own = mine['vote_numeric'].value_counts()
+    return {
+        **base,
+        'resolutions': int(len(mine)),
+        'years': [int(mine['year'].min()), int(mine['year'].max())],
+        'own_votes': {'yes': int(own.get(1.0, 0)), 'no': int(own.get(-1.0, 0)), 'abstain': int(own.get(0.0, 0))},
+        'top_topics': [{'topic': t, 'count': int(c)} for t, c in mine['topic'].value_counts().head(8).items()],
+        'countries_compared': int(len(grouped)),
+        'min_shared': floor,
+        'most_aligned': rows(grouped.sort_values(['agreement', 'shared'], ascending=[False, False]).head(limit)),
+        'least_aligned': rows(grouped.sort_values(['agreement', 'shared'], ascending=[True, False]).head(limit)),
+        # Countries asked about by name, whatever their number of shared votes.
+        'pairs': rows(every[[name.lower() in {c.strip().lower() for c in compare} for name in every.index]]),
+    }
+
+
+@app.get('/topic-agreement')
+def topic_agreement(
+    country: str = Query(..., min_length=2),
+    topic: str = Query('', description="'|'-separated terms matched against each resolution's topic and title; empty for all"),
+    start_year: int = Query(1946, ge=1946, le=2100),
+    end_year: int = Query(2100, ge=1946, le=2100),
+    limit: int = Query(10, ge=1, le=50),
+    min_shared: int = Query(10, ge=1),
+    compare: str = Query('', description='comma-separated countries to report whatever their rank'),
+) -> dict[str, Any]:
+    """Which countries vote most and least like one country at the UN, on a topic."""
+    votes_df: pd.DataFrame = state.data.get('votes_df', pd.DataFrame())
+    if votes_df.empty:
+        raise HTTPException(status_code=503, detail='UN voting data is not loaded')
+    others = tuple(c for c in compare.split(',') if c.strip())
+    return topic_agreement_payload(votes_df, country, topic, start_year, end_year, limit, min_shared, others)
+
+
 @app.get('/health')
 def health() -> dict[str, Any]:
     """Liveness + data stats. Matches the contract used by Trade Intelligence."""

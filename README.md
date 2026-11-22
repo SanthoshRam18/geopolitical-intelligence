@@ -38,7 +38,8 @@ Open **http://127.0.0.1:8000** and ask, for example, *How exposed is India
 right now?*. Stop everything with `scripts\stop_all.ps1`.
 
 On macOS or Linux use `scripts/run_all.sh` (and `scripts/run_all.sh stop`).
-With Docker: `docker compose up --build`.
+With Docker: `docker compose up --build`. To put it on a server with HTTPS and an
+optional login, see **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
 Large datasets are not committed; the trade agent's 21 MB parquet cache is,
 so it answers on a fresh clone. **docs/DATA.md** lists what each service needs and
@@ -270,3 +271,4 @@ services.
 - [docs/CONTRACT.md](docs/CONTRACT.md): the envelope, facets, confidence rules, orchestrator API
 - [docs/MODULE_NOTES.md](docs/MODULE_NOTES.md): what integration found in each module
 - [docs/DATA.md](docs/DATA.md): datasets, sources, sizes
+- [docs/DEPLOY.md](docs/DEPLOY.md): deploying to a Linux VM with HTTPS and an optional login
